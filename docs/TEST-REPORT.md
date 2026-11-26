@@ -116,3 +116,14 @@ Reviewed the [Persian mobile journal](screenshots/journal-fa-japandi.png) and th
 | Visual and accessibility checks | Reviewed the Persian journal and AI settings in both themes. The Persian settings page fit at 320 px in each theme. Its 36 px button face retained a 44 px touch target. Keyboard focus and automated axe WCAG A/AA scans passed in both themes. |
 
 See the [Persian journal](screenshots/journal-fa-japandi.png), [light settings](screenshots/settings-fa-light.png) and [dark settings](screenshots/settings-fa-dark.png). Physical iPhone standalone was not exercised in this run. No live AI requests were made.
+
+## 2026-11-26 — Calio 0.5.0 quick start and release notes
+
+| Check | Outcome |
+|---|---|
+| Formatting, lint, typecheck, client and server builds | Passed. The package and lockfile both report version `0.5.0`. The loopback server returned 200 for Settings and the service worker. |
+| Vitest | 49 tests passed using synthetic data. |
+| Chrome and desktop WebKit | 24 tests passed. Verified Persian and English guide text, focus on the new screen, return to language selection and profile setup, and bypassing setup after saving a profile. Verified localized versions and release notes, keyboard expansion and collapse, and offline reload. |
+| Responsive and accessibility checks | The Persian guide fit at 320 px. Axe scans passed for the guide and expanded release notes. Reviewed both new screens in the light theme at 390 px. |
+
+Physical iPhone standalone was not exercised. No live AI requests were made.

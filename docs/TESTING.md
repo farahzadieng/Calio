@@ -28,5 +28,6 @@ Use Vitest for deterministic functions, Testing Library for components, Playwrig
 | T18 | AI secret not in source/bundle/backup/logs, auth/rate limits, consent off blocks, search prompt injection, import malicious text escaped, demo separate. |
 | T19 | All diagnostic buttons and test messages work, no mock real data contamination, status reflects actual outcome. |
 | T20 | Responsive 320–430px and desktop, iOS standalone/safe area, final production build and deployment smoke. |
+| T21 | First-time language selection opens the localized guide before profile setup. Back and language change work. Existing profiles bypass the guide. Settings shows the localized package version and keyboard-operable release notes offline. |
 
 Test fixtures are deliberately synthetic. Real API/Shortcut tests require user's credentials/device and font gate. Until then report blocked; no fake pass. Test harness in this handoff only checks package contracts, not future app.

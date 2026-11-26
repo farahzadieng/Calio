@@ -1,6 +1,7 @@
 import { readFile, mkdir } from "node:fs/promises";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { APP_VERSION, latestReleaseNotes } from "../../src/app/version";
 import type { Row } from "../../src/db/records";
 import type { HealthDay } from "../../src/domain/health";
 import type { Nutrients } from "../../src/domain/nutrition";
@@ -18,6 +19,14 @@ async function onboard(page: Page, locale: "fa" | "en") {
   await page
     .getByRole("button", { name: t("فارسی", "English"), exact: true })
     .click();
+  await page
+    .getByRole("button", { name: t("شروع راه‌اندازی", "Start setup") })
+    .click();
+  await finishSetup(page, locale);
+}
+
+async function finishSetup(page: Page, locale: "fa" | "en") {
+  const t = word(locale);
   await page
     .getByLabel(t("نام", "First name"), { exact: true })
     .fill(t("آزمایشی", "Synthetic"));
@@ -44,6 +53,79 @@ async function onboard(page: Page, locale: "fa" | "en") {
     page.getByRole("heading", { name: t("دفترچهٔ غذا", "Food journal") }),
   ).toBeVisible();
 }
+
+test("localized quick start and offline release notes are keyboard accessible", async ({
+  page,
+  context,
+}) => {
+  await page.setViewportSize({ width: 320, height: 780 });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "فارسی", exact: true }).click();
+  const faGuide = page.getByRole("heading", { name: "راهنمای شروع" });
+  await expect(faGuide).toBeFocused();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await expect(page.getByRole("listitem")).toHaveCount(4);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    320,
+  );
+  const guideAudit = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(guideAudit.violations).toEqual([]);
+  await page.getByRole("button", { name: "تغییر زبان" }).click();
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  const enGuide = page.getByRole("heading", { name: "Quick start" });
+  await expect(enGuide).toBeFocused();
+  await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  await page.getByRole("button", { name: "Start setup" }).click();
+  await expect(page.getByRole("heading", { name: "About you" })).toBeFocused();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(enGuide).toBeFocused();
+  await page.getByRole("button", { name: "Start setup" }).click();
+  await finishSetup(page, "en");
+
+  const [major, minor, patch] = APP_VERSION.split(".");
+  const englishVersion = patch === "0" ? `${major}.${minor}` : APP_VERSION;
+  const persianVersion = englishVersion.replace(/[0-9.]/g, (character) =>
+    "۰۱۲۳۴۵۶۷۸۹/".charAt("0123456789.".indexOf(character)),
+  );
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: `App version ${englishVersion}` }),
+  ).toBeVisible();
+  const details = page.locator(".release-notes");
+  const summary = details.locator("summary");
+  await expect(details).toHaveJSProperty("open", false);
+  await expect(summary).toHaveText("What's new");
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(details).toHaveJSProperty("open", true);
+  await expect(details.getByRole("listitem")).toHaveText(latestReleaseNotes.en);
+  await page.keyboard.press("Space");
+  await expect(details).toHaveJSProperty("open", false);
+
+  await page.getByLabel("Language").click();
+  await page.getByRole("option", { name: "فارسی", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
+    .toBe(true);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: `نسخهٔ اپ ${persianVersion}` }),
+  ).toBeVisible();
+  await expect(summary).toHaveText("تغییرات آخرین نسخه");
+  await summary.click();
+  await expect(details.getByRole("listitem")).toHaveText(latestReleaseNotes.fa);
+  const settingsAudit = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(settingsAudit.violations).toEqual([]);
+});
 
 test("Persian journal drafts, save, PWA offline reload, edit and delete", async ({
   page,

@@ -71,3 +71,8 @@ Proposed, not settled: exact color hex values, route hierarchy, supplement place
 
 - The owner requested thinner type after reviewing the previous pass. Use Bonyade Koodak at 330 for body, 390 for controls, 420 for section headings and 470 for page titles. Use warm brown for text in light mode and warm beige in dark mode.
 - Use shallow, rounded action buttons with more horizontal space. Keep the 44 px touch target. In settings, the journal and other forms, use a tinted field surface and a subtle border. Keep clear keyboard focus and validation states.
+
+## 2026-11-26 — App version and quick start
+
+- The owner set the starting app version to 0.5. The package number is `0.5.0` and Settings displays `۰/۵` in Persian or `0.5` in English with expandable release notes. Increment the version by the scope of each app update and keep the latest notes in both languages.
+- After language selection for a new profile, show a short guide to the journal, drinks and supplements, optional Apple Health import, and insights. The guide precedes the profile form and can return to language selection. Existing profiles continue to open the app directly.

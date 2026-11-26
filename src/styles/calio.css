@@ -537,6 +537,20 @@ hr {
 .onboard .brand {
   justify-self: start;
 }
+.onboard h1:focus {
+  outline: none;
+}
+.onboard-guide-list .row-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+.onboard-guide-list svg {
+  margin-block-start: 2px;
+  color: var(--primary);
+  stroke-width: 1.55;
+}
 .onboard-progress {
   width: 100%;
   display: grid;
@@ -852,6 +866,17 @@ details > div {
 }
 summary {
   cursor: pointer;
+}
+.release-notes > summary::-webkit-details-marker {
+  display: none;
+}
+.release-notes[open] > summary svg {
+  transform: rotate(180deg);
+}
+.release-notes > ul {
+  margin-block-start: 10px;
+  padding-inline-start: 1.4em;
+  list-style: disc;
 }
 
 :root {

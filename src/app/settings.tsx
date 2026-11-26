@@ -9,6 +9,7 @@ import {
   Database,
   Settings2,
   Plug,
+  ChevronDown,
   Trash2,
   Sun,
   Moon,
@@ -47,11 +48,12 @@ import { AiConnection } from "./ai-connection";
 import { CaloriePage } from "./calories";
 import { nutrientName } from "./nutrient-labels";
 import { Page, useCalio } from "./state";
+import { displayAppVersion, latestReleaseNotes } from "./version";
 
 const Diagnostics = lazy(() => import("./settings-diagnostics"));
 
 function SettingsHome() {
-  const { db, t, settings, notify } = useCalio();
+  const { db, t, locale, settings, notify } = useCalio();
   const [timeZone, setTimeZone] = useState(settings.timeZone);
   const [zoneError, setZoneError] = useState("");
   const [erase, setErase] = useState(false);
@@ -200,6 +202,23 @@ function SettingsHome() {
           </Button>
         </div>
         {storage && <p role="status">{storage}</p>}
+      </section>
+      <section className="panel">
+        <h2>
+          {t("نسخهٔ اپ", "App version")}{" "}
+          <bdi dir="ltr">{displayAppVersion(locale)}</bdi>
+        </h2>
+        <details className="release-notes">
+          <summary className="button button--quiet">
+            {t("تغییرات آخرین نسخه", "What's new")}
+            <ChevronDown size={16} aria-hidden />
+          </summary>
+          <ul role="list" className="stack tight">
+            {latestReleaseNotes[locale].map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </details>
       </section>
       <Modal
         open={erase}

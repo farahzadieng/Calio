@@ -4,6 +4,8 @@
 Write daily; understand weekly. Calio makes nutrition and activity understandable without forcing the user to count calories or fill meal forms. Personal adult wellness and weight tracking, not a medical device. Local raw notes remain editable forever.
 
 ## Onboarding
+After language selection, show a short localized guide to journaling, drinks and supplements, optional Apple Health import, and insights. Continue into profile setup. Existing profiles open the app directly.
+
 First name, age, height cm, weight kg, activity level (sedentary/light/moderate/high/very high), goal (understand/maintain/lose/gain), language, calendar, timezone. Ask physiological reference variable for REE/DRI or allow skip (no false precise estimates). No AI needed; calculate local REE/TDEE with explicit approximation. Show privacy consent before real AI. Invite Health setup; skip possible; never block journal. Use custom multi-step questionnaire with accessible validation. Profile can be updated without changing historical reference snapshots. Adult-only estimates; pregnancy/lactation/medical contexts need qualified guidance and no automated weight target.
 
 ## Main interaction
@@ -23,3 +25,5 @@ At chosen monthly boundary ask current weight, compare against initial/end weigh
 
 ## Settings
 Language independently of calendar, timezone, light/dark/system, accessibility, weight/goals, AI provider status/consent/test, Health Shortcut name/test/import, food library view/search/edit/import/export, full backup/export/import, diagnostics/test messages, clear demo data, delete local data with custom confirmation. User can inspect cached food and portion evidence, correct entries without AI when possible. Do not store secrets in backup.
+
+Show the localized app version with expandable notes for the current release. Both are available offline.

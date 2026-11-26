@@ -1,5 +1,12 @@
-import { useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpenText,
+  ChartNoAxesCombined,
+  Coffee,
+  HeartPulse,
+} from "lucide-react";
 import { Button, Input, Picker, Toggle } from "../components/ui/primitives";
 import type { CalioDatabase } from "../db/database";
 import {
@@ -72,6 +79,8 @@ export default function Onboarding({
   setLocale: (locale: Locale | null) => void;
 }) {
   const t = choose(locale ?? "fa");
+  const heading = useRef<HTMLHeadingElement>(null);
+  const [showGuide, setShowGuide] = useState(true);
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -87,6 +96,10 @@ export default function Onboarding({
   const [zone, setZone] = useState("Asia/Tehran");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    heading.current?.focus();
+  }, [locale, showGuide, step]);
 
   const selectLanguage = (selected: Locale) => {
     setCalendar(selected === "fa" ? "persian" : "gregory");
@@ -192,7 +205,9 @@ export default function Onboarding({
         <Brand locale="en" />
         <div className="panel">
           <div className="stack tight">
-            <h1 lang="fa">زبان را انتخاب کنید</h1>
+            <h1 lang="fa" ref={heading} tabIndex={-1}>
+              زبان را انتخاب کنید
+            </h1>
             <p className="muted" lang="en">
               Choose your language
             </p>
@@ -211,13 +226,79 @@ export default function Onboarding({
       </main>
     );
 
+  if (showGuide) {
+    const topics = [
+      {
+        Icon: BookOpenText,
+        title: t("دفترچه", "Journal"),
+        description: t(
+          "خوراک روز را بنویسید و ذخیره کنید.",
+          "Write down what you ate and save it.",
+        ),
+      },
+      {
+        Icon: Coffee,
+        title: t("نوشیدنی و مکمل", "Drinks and supplements"),
+        description: t(
+          "نوشیدنی با یک لمس، مکمل از دفترچه.",
+          "Log drinks in one tap and supplements from the journal.",
+        ),
+      },
+      {
+        Icon: HeartPulse,
+        title: t("Apple Health اختیاری", "Optional Apple Health"),
+        description: t(
+          "قدم‌ها و انرژی مصرفی را از تنظیمات وارد کنید.",
+          "Import steps and energy burned from Settings.",
+        ),
+      },
+      {
+        Icon: ChartNoAxesCombined,
+        title: t("تحلیل", "Insights"),
+        description: t(
+          "نمودارها و روند ثبت‌ها را ببینید.",
+          "See charts and trends in your entries.",
+        ),
+      },
+    ];
+    return (
+      <main className="onboard route-enter" lang={locale}>
+        <Brand locale={locale} />
+        <section className="panel">
+          <h1 ref={heading} tabIndex={-1}>
+            {t("راهنمای شروع", "Quick start")}
+          </h1>
+          <ul className="rows onboard-guide-list" role="list">
+            {topics.map(({ Icon, title, description }) => (
+              <li className="row-item" key={title}>
+                <Icon size={20} aria-hidden />
+                <div>
+                  <h2>{title}</h2>
+                  <p className="muted small">{description}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="actions">
+            <Button onClick={() => setShowGuide(false)}>
+              {t("شروع راه‌اندازی", "Start setup")}
+            </Button>
+            <Button tone="quiet" onClick={() => setLocale(null)}>
+              {t("تغییر زبان", "Change language")}
+            </Button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const headings = [
     t("دربارهٔ شما", "About you"),
     t("هدف و فعالیت", "Goals and activity"),
     t("تنظیمات دفترچه", "Journal preferences"),
   ];
   return (
-    <main className="onboard route-enter">
+    <main className="onboard route-enter" lang={locale}>
       <Brand locale={locale} />
       <div
         className="onboard-progress"
@@ -236,7 +317,9 @@ export default function Onboarding({
         noValidate
         onSubmit={(event) => void submit(event)}
       >
-        <h1>{headings[step]}</h1>
+        <h1 ref={heading} tabIndex={-1}>
+          {headings[step]}
+        </h1>
         {step === 0 && (
           <>
             <Input
@@ -356,7 +439,7 @@ export default function Onboarding({
             tone="quiet"
             onClick={() => {
               setErrors({});
-              if (step === 0) setLocale(null);
+              if (step === 0) setShowGuide(true);
               else setStep(step - 1);
             }}
           >
