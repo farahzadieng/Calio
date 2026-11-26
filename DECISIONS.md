@@ -66,3 +66,8 @@ Proposed, not settled: exact color hex values, route hierarchy, supplement place
 - Live navigation slides horizontally in both directions, mirrored for RTL. It uses one active scene and honors reduced motion. Remotion continues to run only the report reveal.
 - The planned public address is `https://calio.luminiastudio.ir/` and has not been published. The owner confirmed public redistribution permission for the active Bonyade Koodak webfont in the Calio repository.
 - Project-level agent instructions and visual architecture are consolidated into `AGENT.md`. Keep runtime, test, deployment, evidence and design references needed by the project. Exclude local credentials, generated caches and unused font variants.
+
+## 2026-11-26 — Lighter type, quieter fields and compact buttons
+
+- The owner requested thinner type after reviewing the previous pass. Use Bonyade Koodak at 330 for body, 390 for controls, 420 for section headings and 470 for page titles. Use warm brown for text in light mode and warm beige in dark mode.
+- Use shallow, rounded action buttons with more horizontal space. Keep the 44 px touch target. In settings, the journal and other forms, use a tinted field surface and a subtle border. Keep clear keyboard focus and validation states.

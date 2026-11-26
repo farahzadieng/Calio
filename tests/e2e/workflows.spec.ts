@@ -526,14 +526,13 @@ test("Persian date shortcuts use Eastern numerals and notifications dismiss afte
   await page.clock.install({ time: new Date("2026-11-26T12:00:00Z") });
   await onboard(page, "fa");
   const heading = page.getByRole("heading", { name: "دفترچهٔ غذا" });
-  expect(
-    await heading.evaluate((node) => getComputedStyle(node).fontWeight),
-  ).toBe("600");
+  await expect(heading).toHaveCSS("font-weight", "470");
+  await expect(page.locator("body")).toHaveCSS("font-weight", "330");
   expect(
     await page.evaluate(async () => {
       const [one, two] = await Promise.all([
-        document.fonts.load('600 32px "Bonyade Koodak"', "۱"),
-        document.fonts.load('600 32px "Bonyade Koodak"', "۲"),
+        document.fonts.load('470 24px "Bonyade Koodak"', "۱"),
+        document.fonts.load('470 24px "Bonyade Koodak"', "۲"),
       ]);
       return [one.length, two.length];
     }),
@@ -612,6 +611,15 @@ test.describe("intercepted connection settings", () => {
     const save = page.getByRole("button", { name: "Save connection" });
     await expect(analysis).toHaveValue("openai/gpt-6-luna");
     await expect(search).toHaveValue("perplexity/sonar");
+    await expect(save).toHaveCSS("min-height", "44px");
+    await expect(analysis).toHaveCSS("border-top-width", "1px");
+    await page.keyboard.press("Tab");
+    await analysis.focus();
+    await expect(analysis).toHaveCSS("outline-width", "2px");
+    const axe = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    expect(axe.violations).toEqual([]);
     await page.getByLabel("API base URL").fill("https://provider.example/v1");
     await analysis.fill("synthetic/analysis");
     await search.fill("synthetic/search");

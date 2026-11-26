@@ -105,3 +105,14 @@ Reviewed the [Persian composer](screenshots/journal-fa-japandi.png), [drink artw
 | Local production smoke | The loopback app served the rebuilt directional slide and visual stylesheet. |
 
 Reviewed the [Persian mobile journal](screenshots/journal-fa-japandi.png) and the [English dark journal](screenshots/journal-en-dark.png). The production domain has yet to be deployed. Physical iPhone standalone was not exercised in this run.
+
+## 2026-11-26 — Lighter type and quieter form controls
+
+| Check | Outcome |
+|---|---|
+| Format, lint, typecheck and production builds | Passed. Both the PWA and Node adapter built successfully. |
+| Vitest | 49 passed using synthetic data. |
+| Chrome and desktop WebKit | 22 passed. Verified the lighter headings, Persian numerals, settings field and keyboard focus styles, and the 44 px action target. Existing offline, backup, calendar and RTL/LTR workflows passed. |
+| Visual and accessibility checks | Reviewed the Persian journal and AI settings in both themes. The Persian settings page fit at 320 px in each theme. Its 36 px button face retained a 44 px touch target. Keyboard focus and automated axe WCAG A/AA scans passed in both themes. |
+
+See the [Persian journal](screenshots/journal-fa-japandi.png), [light settings](screenshots/settings-fa-light.png) and [dark settings](screenshots/settings-fa-dark.png). Physical iPhone standalone was not exercised in this run. No live AI requests were made.
