@@ -1,0 +1,76 @@
+{
+  "name": "calio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^22.13.0 || ^24.0.0 || >=26.0.0"
+  },
+  "scripts": {
+    "generate:validators": "node scripts/generate-validators.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests server scripts",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"server/**/*.ts\" \"scripts/**/*.mjs\" \"*.config.*\" tsconfig.json package.json index.html public/theme-init.js",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"server/**/*.ts\" \"scripts/**/*.mjs\" \"*.config.*\" tsconfig.json package.json index.html public/theme-init.js",
+    "test": "vitest run",
+    "dev": "vite",
+    "build": "npm run generate:validators && tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "build:server": "esbuild server/node.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist-server/node.mjs",
+    "start": "node --env-file-if-exists=.env dist-server/node.mjs"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.9.0",
+    "@daypicker/persian": "10.0.2",
+    "@remotion/player": "4.0.547",
+    "@remotion/transitions": "4.0.547",
+    "dexie": "4.4.7",
+    "dexie-react-hooks": "4.4.0",
+    "lucide-react": "1.80.0",
+    "papaparse": "5.7.1",
+    "react": "19.2.9",
+    "react-day-picker": "10.0.2",
+    "react-dom": "19.2.9",
+    "react-router": "7.18.7",
+    "remotion": "4.0.547",
+    "workbox-core": "7.4.1",
+    "workbox-precaching": "7.4.1",
+    "workbox-routing": "7.4.1",
+    "workbox-window": "7.4.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
+    "@tailwindcss/vite": "4.3.5",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "22.20.7",
+    "@types/papaparse": "5.5.2",
+    "@types/react": "19.3.3",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "esbuild": "0.25.12",
+    "eslint": "10.15.0",
+    "fake-indexeddb": "6.2.8",
+    "jsdom": "28.1.0",
+    "json-schema-to-typescript": "16.0.0",
+    "prettier": "3.10.1",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.74.0",
+    "vite": "7.3.8",
+    "vite-plugin-pwa": "2.0.0",
+    "vitest": "5.1.2",
+    "workbox-build": "7.4.1"
+  },
+  "overrides": {
+    "workbox-build": {
+      "glob": "14.0.6"
+    }
+  }
+}

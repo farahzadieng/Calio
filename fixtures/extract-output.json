@@ -1,0 +1,53 @@
+{
+  "entries": [
+    {
+      "entry_id": "demo-1",
+      "revision": 1,
+      "local_date": "2026-11-01",
+      "items": [
+        {
+          "item_id": "i1",
+          "name_fa": "سالاد الویه",
+          "name_en": "Olivieh",
+          "quantity": 2,
+          "unit": "bite",
+          "variant": "unknown",
+          "preparation": "unknown",
+          "brand": null,
+          "confidence": "medium",
+          "assumptions": [],
+          "requires_review": false,
+          "review_reason": null
+        },
+        {
+          "item_id": "i2",
+          "name_fa": "چای شیرین",
+          "name_en": "Sweet tea",
+          "quantity": 0.5,
+          "unit": "glass",
+          "variant": "sweetened",
+          "preparation": "unknown",
+          "brand": null,
+          "confidence": "medium",
+          "assumptions": [
+            "Sugar amount unknown"
+          ],
+          "requires_review": false,
+          "review_reason": null
+        }
+      ],
+      "symptoms": [
+        "دیشب بد خوابیدم"
+      ],
+      "unparsed_text": []
+    },
+    {
+      "entry_id": "demo-2",
+      "revision": 1,
+      "local_date": "2026-11-02",
+      "items": [],
+      "symptoms": [],
+      "unparsed_text": []
+    }
+  ]
+}

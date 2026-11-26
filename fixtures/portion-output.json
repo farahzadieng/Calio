@@ -1,0 +1,17 @@
+{
+  "food_name": "Synthetic demo food",
+  "variant": "demo",
+  "unit": "bite",
+  "grams_per_unit": 30,
+  "ml_per_unit": null,
+  "range_low": 20,
+  "range_high": 40,
+  "range_unit": "g",
+  "confidence": "low",
+  "assumptions": [
+    "Synthetic QA value; no real source"
+  ],
+  "sources": [],
+  "requires_review": false,
+  "status": "estimated"
+}

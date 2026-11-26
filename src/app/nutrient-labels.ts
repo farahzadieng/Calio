@@ -1,0 +1,47 @@
+import type { NutrientKey } from "../domain/nutrition";
+import type { Locale } from "../domain/dates";
+
+const names: Record<NutrientKey, [string, string]> = {
+  energy_kcal: ["انرژی", "Energy"],
+  water_ml: ["آب", "Water"],
+  caffeine_mg: ["کافئین", "Caffeine"],
+  protein_g: ["پروتئین", "Protein"],
+  carbohydrates_g: ["کربوهیدرات", "Carbohydrate"],
+  total_fat_g: ["چربی کل", "Total fat"],
+  dietary_sugar_g: ["قند کل", "Total sugar"],
+  fiber_g: ["فیبر", "Fiber"],
+  saturated_fat_g: ["چربی اشباع", "Saturated fat"],
+  monounsaturated_fat_g: ["چربی تک‌غیراشباع", "Monounsaturated fat"],
+  polyunsaturated_fat_g: ["چربی چندغیراشباع", "Polyunsaturated fat"],
+  dietary_cholesterol_mg: ["کلسترول", "Dietary cholesterol"],
+  vitamin_a_ug: ["ویتامین A", "Vitamin A"],
+  thiamin_b1_mg: ["تیامین (B1)", "Thiamin (B1)"],
+  riboflavin_b2_mg: ["ریبوفلاوین (B2)", "Riboflavin (B2)"],
+  niacin_b3_mg: ["نیاسین (B3)", "Niacin (B3)"],
+  pantothenic_acid_b5_mg: ["پانتوتنیک اسید (B5)", "Pantothenic acid (B5)"],
+  vitamin_b6_mg: ["ویتامین B6", "Vitamin B6"],
+  biotin_b7_ug: ["بیوتین (B7)", "Biotin (B7)"],
+  folate_b9_ug: ["فولات (B9)", "Folate (B9)"],
+  vitamin_b12_ug: ["ویتامین B12", "Vitamin B12"],
+  vitamin_c_mg: ["ویتامین C", "Vitamin C"],
+  vitamin_d_ug: ["ویتامین D", "Vitamin D"],
+  vitamin_e_mg: ["ویتامین E", "Vitamin E"],
+  vitamin_k_ug: ["ویتامین K", "Vitamin K"],
+  calcium_mg: ["کلسیم", "Calcium"],
+  chloride_mg: ["کلرید", "Chloride"],
+  chromium_ug: ["کروم", "Chromium"],
+  copper_mg: ["مس", "Copper"],
+  iodine_ug: ["ید", "Iodine"],
+  iron_mg: ["آهن", "Iron"],
+  magnesium_mg: ["منیزیم", "Magnesium"],
+  manganese_mg: ["منگنز", "Manganese"],
+  molybdenum_ug: ["مولیبدن", "Molybdenum"],
+  phosphorus_mg: ["فسفر", "Phosphorus"],
+  potassium_mg: ["پتاسیم", "Potassium"],
+  selenium_ug: ["سلنیوم", "Selenium"],
+  sodium_mg: ["سدیم", "Sodium"],
+  zinc_mg: ["روی", "Zinc"],
+};
+export function nutrientName(key: NutrientKey, locale: Locale) {
+  return names[key][locale === "fa" ? 0 : 1];
+}

@@ -1,0 +1,311 @@
+{
+  "accessedDate": "2026-11-26",
+  "sources": {
+    "iranian-bread-2020": {
+      "url": "https://doi.org/10.5812/ijem.99793",
+      "title": "Kazemi et al. (2020), Glycemic Index Values for Major Sources of Dietary Carbohydrates in Iran, Table 1",
+      "method": "study-sample"
+    },
+    "iranian-kuku-2015": {
+      "url": "https://doi.org/10.1016/j.profoo.2015.06.008",
+      "title": "Ghazizadeh and Behnammoradi (2015), Recipe calculation of six Iranian Egg-based Dishes (KuKu), Table 1",
+      "method": "recipe-estimate"
+    },
+    "iranian-rural-1996": {
+      "url": "https://applications.emro.who.int/emhj/0202/emhj_1996_2_2_261_267.pdf",
+      "title": "Composition and nutritional value of traditional rural Iranian foods (1996), Tables 4–5",
+      "method": "study-sample"
+    },
+    "moby-dick-2018": {
+      "url": "https://www.mobyskabob.com/wp-content/uploads/2018/09/MobyDick_NutritionBook.pdf",
+      "title": "Moby Dick House of Kabob (2018), Weekly Specials nutrition labels",
+      "method": "restaurant-label"
+    }
+  },
+  "foods": [
+    {
+      "id": "bcd8f2bb-3efe-56fa-ac38-1ed1d87bd109",
+      "key": "sangak",
+      "nameFa": "نان سنگک",
+      "nameEn": "Sangak bread",
+      "kcalPer100g": 258,
+      "preparation": "baked",
+      "aliases": ["سنگک", "sangak"],
+      "source": "iranian-bread-2020"
+    },
+    {
+      "id": "767fe3ec-09db-5e59-9527-859acd490717",
+      "key": "lavash",
+      "nameFa": "نان لواش",
+      "nameEn": "Lavash bread",
+      "kcalPer100g": 291,
+      "preparation": "baked",
+      "aliases": ["لواش", "lavash"],
+      "source": "iranian-bread-2020"
+    },
+    {
+      "id": "7a242954-f086-5435-8e87-28deaece6b91",
+      "key": "taftoon",
+      "nameFa": "نان تافتون",
+      "nameEn": "Taftoon bread",
+      "kcalPer100g": 279,
+      "preparation": "baked",
+      "aliases": ["تافتون", "taftoon", "taftan bread"],
+      "source": "iranian-bread-2020"
+    },
+    {
+      "id": "6264cce7-0d38-5d3e-af70-35726d919921",
+      "key": "barbari",
+      "nameFa": "نان بربری",
+      "nameEn": "Barbari bread",
+      "kcalPer100g": 272,
+      "preparation": "baked",
+      "aliases": ["بربری", "barbari"],
+      "source": "iranian-bread-2020"
+    },
+    {
+      "id": "eca04648-2bbf-5a71-b74d-601c0f46a975",
+      "key": "cauliflower",
+      "nameFa": "کوکوی گل‌کلم",
+      "nameEn": "Cauliflower kuku",
+      "kcalPer100g": 148.18,
+      "preparation": "fried",
+      "aliases": ["کوکو گل کلم", "کوکوی گل کلم"],
+      "source": "iranian-kuku-2015"
+    },
+    {
+      "id": "0a5cbed8-4558-51eb-b18b-72034f105853",
+      "key": "aubergine",
+      "nameFa": "کوکوی بادمجان",
+      "nameEn": "Eggplant kuku",
+      "kcalPer100g": 391.54,
+      "preparation": "fried",
+      "aliases": [
+        "کوکو بادمجان",
+        "کوکو بادمجون",
+        "کوکوی بادمجون",
+        "aubergine kuku"
+      ],
+      "source": "iranian-kuku-2015"
+    },
+    {
+      "id": "069e7c74-a8b1-548f-83a2-18cc69e9b579",
+      "key": "green-beans",
+      "nameFa": "کوکوی لوبیا سبز",
+      "nameEn": "Green bean kuku",
+      "kcalPer100g": 200.73,
+      "preparation": "fried",
+      "aliases": ["کوکو لوبیا سبز", "green beans kuku"],
+      "source": "iranian-kuku-2015"
+    },
+    {
+      "id": "ed28299b-aa02-59cd-bf94-c964cd226d70",
+      "key": "herbs",
+      "nameFa": "کوکو سبزی",
+      "nameEn": "Green herb kuku",
+      "kcalPer100g": 231.14,
+      "preparation": "fried",
+      "aliases": [
+        "کوکوسبزی",
+        "کوکوی سبزی",
+        "kuku sabzi",
+        "kookoo sabzi",
+        "green herbs kuku"
+      ],
+      "source": "iranian-kuku-2015"
+    },
+    {
+      "id": "7dc7947a-7b1b-5e98-876f-e9a8b68b99a9",
+      "key": "potato",
+      "nameFa": "کوکوی سیب‌زمینی",
+      "nameEn": "Potato kuku",
+      "kcalPer100g": 227.65,
+      "preparation": "fried",
+      "aliases": ["کوکو سیب زمینی", "کوکو سیبزمینی", "کوکوی سیب زمینی"],
+      "source": "iranian-kuku-2015"
+    },
+    {
+      "id": "444a349b-0089-56cc-ab30-4be61ebfc8b0",
+      "key": "zucchini",
+      "nameFa": "کوکوی کدو سبز",
+      "nameEn": "Zucchini kuku",
+      "kcalPer100g": 271.72,
+      "preparation": "fried",
+      "aliases": ["کوکو کدو سبز", "کوکو کدو", "courgette kuku"],
+      "source": "iranian-kuku-2015"
+    },
+    {
+      "id": "aa12964d-3d98-5d4b-9c8c-0904063304e3",
+      "key": "mirza",
+      "nameFa": "میرزا قاسمی",
+      "nameEn": "Mirza ghasemi",
+      "kcalPer100g": 103,
+      "preparation": "cooked",
+      "aliases": ["میرزاقاسمی", "mirzaghasemi"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "058d7589-7db6-5196-9fd8-5684f7e36fa6",
+      "key": "chekdermeh",
+      "nameFa": "چکدرمه",
+      "nameEn": "Chekdermeh",
+      "kcalPer100g": 344,
+      "preparation": "cooked",
+      "aliases": ["چک درمه", "چکدیرمه", "chekdirme"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "f617af68-e8d2-514a-8bb7-d02a94c63113",
+      "key": "bozghormeh",
+      "nameFa": "بزقرمه",
+      "nameEn": "Bozghormeh",
+      "kcalPer100g": 343,
+      "preparation": "cooked",
+      "aliases": ["بز قرمه", "boz ghormeh"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "3b290708-89af-56a9-9e80-d98f75b133f9",
+      "key": "abgoosht-pistachio",
+      "nameFa": "آبگوشت پسته",
+      "nameEn": "Pistachio abgoosht",
+      "kcalPer100g": 173,
+      "preparation": "cooked",
+      "aliases": [
+        "آبگوشت پسته کرمانی",
+        "آب گوشت پسته",
+        "abgousht pesteh",
+        "abgoosht pesteh"
+      ],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "3bdd12d7-ccfb-592c-8d78-313af485bfa1",
+      "key": "ash-ardeh",
+      "nameFa": "آش ارده",
+      "nameEn": "Ash ardeh",
+      "kcalPer100g": 250,
+      "preparation": "cooked",
+      "aliases": ["ash-e ardeh"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "d2e687bd-47ed-5e7d-9c51-8b5b11f1d68e",
+      "key": "kal-kabab",
+      "nameFa": "کال کباب",
+      "nameEn": "Kal kabab",
+      "kcalPer100g": 100,
+      "preparation": "prepared",
+      "aliases": ["کال‌کباب", "کالکباب", "kal kebab"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "fac8961b-d235-55e2-9774-4b4e3c432547",
+      "key": "eshkeneh-daneh",
+      "nameFa": "اشکنه دانه",
+      "nameEn": "Eshkeneh daneh",
+      "kcalPer100g": 407,
+      "preparation": "cooked",
+      "aliases": ["eshkeneh-daneh", "اشکنهٔ دانه"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "45ae89b3-a9f6-580a-8f5b-74b70c9650ff",
+      "key": "mast-joosh",
+      "nameFa": "ماست‌جوش",
+      "nameEn": "Mast joosh",
+      "kcalPer100g": 120,
+      "preparation": "cooked",
+      "aliases": ["ماست جوش", "mast joush"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "f59fdbb2-e419-5828-a315-772fda7db65e",
+      "key": "kal-joosh-walnut",
+      "nameFa": "کال‌جوش با گردو",
+      "nameEn": "Walnut kal joosh",
+      "kcalPer100g": 446,
+      "preparation": "cooked",
+      "aliases": ["کله جوش با گردو", "کالجوش با گردو", "kal joush with walnut"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "f6c3bedb-71d9-5992-bb62-6dfd402a6564",
+      "key": "ash-tamarind",
+      "nameFa": "آش تمر هندی",
+      "nameEn": "Tamarind ash",
+      "kcalPer100g": 175,
+      "preparation": "cooked",
+      "aliases": ["آش تمرهندی", "ash tamr i hindi"],
+      "source": "iranian-rural-1996"
+    },
+    {
+      "id": "76352d9f-f37b-5d35-b09c-867fcb2db795",
+      "key": "ghalieh-mahie",
+      "nameFa": "قلیه‌ماهی",
+      "nameEn": "Ghalieh mahi",
+      "preparation": "cooked",
+      "aliases": ["قلیه ماهی", "ghalyieh mahi", "ghalieh-mahie"],
+      "source": "iranian-rural-1996",
+      "kcalPer100g": 174
+    },
+    {
+      "id": "402f8999-f812-5861-850d-75ddc24e97d2",
+      "key": "tarkhineh",
+      "nameFa": "ترخینه",
+      "nameEn": "Tarkhineh",
+      "preparation": "cooked",
+      "aliases": ["ترخنه", "آش ترخینه", "tarkhineh soup"],
+      "source": "iranian-rural-1996",
+      "kcalPer100g": 142
+    },
+    {
+      "id": "7f34ca1b-8ded-56f2-ac02-b2b33630b1cb",
+      "key": "moby-ghormeh-sabzi",
+      "nameFa": "قرمه‌سبزی با برنج",
+      "nameEn": "Ghormeh sabzi with rice",
+      "preparation": "cooked",
+      "aliases": ["قورمه سبزی با برنج", "ghormeh sabzi with basmati rice"],
+      "source": "moby-dick-2018",
+      "brand": "Moby Dick House of Kabob",
+      "servingKcal": 1010,
+      "servingGrams": 878
+    },
+    {
+      "id": "d5ebda13-2168-59b9-8e4e-052138b5f31c",
+      "key": "moby-lubia-polo",
+      "nameFa": "لوبیاپلو",
+      "nameEn": "Lubia polo",
+      "preparation": "cooked",
+      "aliases": ["لوبیا پلو", "loobia polo"],
+      "source": "moby-dick-2018",
+      "brand": "Moby Dick House of Kabob",
+      "servingKcal": 980,
+      "servingGrams": 765
+    },
+    {
+      "id": "82722d14-26ff-5a00-9772-e080491f8190",
+      "key": "moby-zereshk-polo",
+      "nameFa": "زرشک‌پلو با مرغ",
+      "nameEn": "Zereshk polo with chicken",
+      "preparation": "cooked",
+      "aliases": ["زرشک پلو با مرغ"],
+      "source": "moby-dick-2018",
+      "brand": "Moby Dick House of Kabob",
+      "servingKcal": 1100,
+      "servingGrams": 615
+    },
+    {
+      "id": "e29b8b05-59a9-554b-9a9b-f554b11f4e83",
+      "key": "moby-gheymeh-bademjan",
+      "nameFa": "قیمه بادمجان با برنج",
+      "nameEn": "Gheymeh bademjan with rice",
+      "preparation": "cooked",
+      "aliases": ["خورش قیمه بادمجان با برنج"],
+      "source": "moby-dick-2018",
+      "brand": "Moby Dick House of Kabob",
+      "servingKcal": 870,
+      "servingGrams": 708
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+# Empty production library
+foods.json is the empty initializer, not a fake backup. foods.csv is header-only for editable import; basis per_100g or per_100ml; null/blank unknown. 39 keys from nutrients.json. No preloaded food or medical reference values. Implement separate reference table with verified DRI/UL sources, separate aliases and portions, and versioned library export. Demo records only under fixtures. CSV carries evidence_json; JSON authoritative for lossless export. Import schema validation and preview required.

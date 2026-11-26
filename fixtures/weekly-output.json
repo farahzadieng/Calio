@@ -1,0 +1,14 @@
+{
+  "period_id": "demo-week",
+  "title": "گزارش آزمایشی",
+  "summary": "داده ساختگی است.",
+  "energy_activity": "یک روز داده انرژی ناقص دارد.",
+  "strengths": [],
+  "attention": [],
+  "lifestyle_associations": [],
+  "actions": [],
+  "data_gaps": [
+    "داده روز دوم ناقص است."
+  ],
+  "professional_guidance": "این گزارش واقعی نیست."
+}

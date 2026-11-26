@@ -1,0 +1,858 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "food_name_fa": {
+      "type": "string"
+    },
+    "food_name_en": {
+      "type": "string"
+    },
+    "variant": {
+      "type": "string"
+    },
+    "basis": {
+      "enum": [
+        "per_100g",
+        "per_100ml"
+      ]
+    },
+    "nutrients": {
+      "type": "object",
+      "properties": {
+        "energy_kcal": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "water_ml": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "caffeine_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "protein_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "carbohydrates_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "total_fat_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "dietary_sugar_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "fiber_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "saturated_fat_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "monounsaturated_fat_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "polyunsaturated_fat_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "dietary_cholesterol_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "vitamin_a_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "thiamin_b1_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "riboflavin_b2_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "niacin_b3_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "pantothenic_acid_b5_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "vitamin_b6_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "biotin_b7_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "folate_b9_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "vitamin_b12_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "vitamin_c_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "vitamin_d_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "vitamin_e_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "vitamin_k_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "calcium_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "chloride_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "chromium_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "copper_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "iodine_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "iron_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "magnesium_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "manganese_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "molybdenum_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "phosphorus_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "potassium_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "selenium_ug": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "sodium_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "zinc_mg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "energy_kcal",
+        "water_ml",
+        "caffeine_mg",
+        "protein_g",
+        "carbohydrates_g",
+        "total_fat_g",
+        "dietary_sugar_g",
+        "fiber_g",
+        "saturated_fat_g",
+        "monounsaturated_fat_g",
+        "polyunsaturated_fat_g",
+        "dietary_cholesterol_mg",
+        "vitamin_a_ug",
+        "thiamin_b1_mg",
+        "riboflavin_b2_mg",
+        "niacin_b3_mg",
+        "pantothenic_acid_b5_mg",
+        "vitamin_b6_mg",
+        "biotin_b7_ug",
+        "folate_b9_ug",
+        "vitamin_b12_ug",
+        "vitamin_c_mg",
+        "vitamin_d_ug",
+        "vitamin_e_mg",
+        "vitamin_k_ug",
+        "calcium_mg",
+        "chloride_mg",
+        "chromium_ug",
+        "copper_mg",
+        "iodine_ug",
+        "iron_mg",
+        "magnesium_mg",
+        "manganese_mg",
+        "molybdenum_ug",
+        "phosphorus_mg",
+        "potassium_mg",
+        "selenium_ug",
+        "sodium_mg",
+        "zinc_mg"
+      ],
+      "additionalProperties": false
+    },
+    "added_sugar_g": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "method": {
+      "enum": [
+        "database",
+        "label",
+        "recipe_estimate",
+        "mixed",
+        "unresolved"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "accessed_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "tool_evidence_id": {
+            "type": "string"
+          },
+          "nutrient_keys": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "energy_kcal",
+                "water_ml",
+                "caffeine_mg",
+                "protein_g",
+                "carbohydrates_g",
+                "total_fat_g",
+                "dietary_sugar_g",
+                "fiber_g",
+                "saturated_fat_g",
+                "monounsaturated_fat_g",
+                "polyunsaturated_fat_g",
+                "dietary_cholesterol_mg",
+                "vitamin_a_ug",
+                "thiamin_b1_mg",
+                "riboflavin_b2_mg",
+                "niacin_b3_mg",
+                "pantothenic_acid_b5_mg",
+                "vitamin_b6_mg",
+                "biotin_b7_ug",
+                "folate_b9_ug",
+                "vitamin_b12_ug",
+                "vitamin_c_mg",
+                "vitamin_d_ug",
+                "vitamin_e_mg",
+                "vitamin_k_ug",
+                "calcium_mg",
+                "chloride_mg",
+                "chromium_ug",
+                "copper_mg",
+                "iodine_ug",
+                "iron_mg",
+                "magnesium_mg",
+                "manganese_mg",
+                "molybdenum_ug",
+                "phosphorus_mg",
+                "potassium_mg",
+                "selenium_ug",
+                "sodium_mg",
+                "zinc_mg"
+              ]
+            }
+          }
+        },
+        "required": [
+          "url",
+          "title",
+          "accessed_date",
+          "basis",
+          "tool_evidence_id",
+          "nutrient_keys"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recipe": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "amount_g": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "amount_ml": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "reference_basis": {
+                "enum": [
+                  "per_100g",
+                  "per_100ml"
+                ]
+              },
+              "nutrients": {
+                "type": "object",
+                "properties": {
+                  "energy_kcal": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "water_ml": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "caffeine_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "protein_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "carbohydrates_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "total_fat_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "dietary_sugar_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "fiber_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "saturated_fat_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "monounsaturated_fat_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "polyunsaturated_fat_g": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "dietary_cholesterol_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "vitamin_a_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "thiamin_b1_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "riboflavin_b2_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "niacin_b3_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "pantothenic_acid_b5_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "vitamin_b6_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "biotin_b7_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "folate_b9_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "vitamin_b12_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "vitamin_c_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "vitamin_d_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "vitamin_e_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "vitamin_k_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "calcium_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "chloride_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "chromium_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "copper_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "iodine_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "iron_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "magnesium_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "manganese_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "molybdenum_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "phosphorus_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "potassium_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "selenium_ug": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "sodium_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "zinc_mg": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "energy_kcal",
+                  "water_ml",
+                  "caffeine_mg",
+                  "protein_g",
+                  "carbohydrates_g",
+                  "total_fat_g",
+                  "dietary_sugar_g",
+                  "fiber_g",
+                  "saturated_fat_g",
+                  "monounsaturated_fat_g",
+                  "polyunsaturated_fat_g",
+                  "dietary_cholesterol_mg",
+                  "vitamin_a_ug",
+                  "thiamin_b1_mg",
+                  "riboflavin_b2_mg",
+                  "niacin_b3_mg",
+                  "pantothenic_acid_b5_mg",
+                  "vitamin_b6_mg",
+                  "biotin_b7_ug",
+                  "folate_b9_ug",
+                  "vitamin_b12_ug",
+                  "vitamin_c_mg",
+                  "vitamin_d_ug",
+                  "vitamin_e_mg",
+                  "vitamin_k_ug",
+                  "calcium_mg",
+                  "chloride_mg",
+                  "chromium_ug",
+                  "copper_mg",
+                  "iodine_ug",
+                  "iron_mg",
+                  "magnesium_mg",
+                  "manganese_mg",
+                  "molybdenum_ug",
+                  "phosphorus_mg",
+                  "potassium_mg",
+                  "selenium_ug",
+                  "sodium_mg",
+                  "zinc_mg"
+                ],
+                "additionalProperties": false
+              },
+              "source_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "name",
+              "amount_g",
+              "amount_ml",
+              "reference_basis",
+              "nutrients",
+              "source_ids"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "final_yield_g": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "ingredients",
+        "final_yield_g"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "enum": [
+        "resolved",
+        "estimated",
+        "unresolved"
+      ]
+    }
+  },
+  "required": [
+    "food_name_fa",
+    "food_name_en",
+    "variant",
+    "basis",
+    "nutrients",
+    "added_sugar_g",
+    "confidence",
+    "method",
+    "sources",
+    "assumptions",
+    "recipe",
+    "status"
+  ],
+  "additionalProperties": false
+}

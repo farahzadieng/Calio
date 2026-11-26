@@ -1,0 +1,24 @@
+{
+  "mode": "demo",
+  "period_start": "2026-11-01",
+  "period_end": "2026-11-30",
+  "weight_measurements": [
+    {
+      "date": "2026-11-01",
+      "kg": 70
+    },
+    {
+      "date": "2026-11-30",
+      "kg": 69.8
+    }
+  ],
+  "model_name": "illustrative_static_7700",
+  "coefficient": 7700,
+  "intake_kcal": 56400,
+  "expenditure_kcal": 64100,
+  "expected_delta_kg": -1,
+  "actual_delta_kg": -0.2,
+  "discrepancy_kg": 0.8,
+  "paired_days": 30,
+  "warning": "Synthetic arithmetic fixture, not real dietary advice"
+}
