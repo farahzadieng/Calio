@@ -155,7 +155,13 @@ test("Persian journal drafts, save, PWA offline reload, edit and delete", async 
   await page.reload();
   await expect(page.locator("#calio-main h1")).toBeVisible();
   await page.goto("/settings/integrations");
-  await expect(page.getByLabel("کلید API")).toBeEditable();
+  const connectionKey = page.getByLabel("کلید API");
+  await connectionKey.fill("synthetic-offline-key");
+  await page.getByRole("button", { name: "ذخیرهٔ اتصال" }).click();
+  await expect(page.getByText("تنظیمات اتصال ذخیره شد.")).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(/^کلید ذخیره شده است/)).toBeVisible();
+  await expect(connectionKey).toHaveValue("");
   await page.getByRole("link", { name: "دفترچه", exact: true }).click();
   await expect(textarea).toHaveValue("یادداشت ساختگی ۲ لیوان چای");
   await page.getByRole("button", { name: "ذخیره", exact: true }).click();
@@ -518,58 +524,55 @@ test("Persian calorie table and copied ChatGPT JSON work without a live API", as
 test.describe("synthetic AI-enabled browser", () => {
   test.use({ serviceWorkers: "block" });
 
-  test("English automatic calorie lookup uses a synthetic same-origin gateway", async ({
+  test("English automatic calorie lookup calls the provider directly", async ({
     page,
   }) => {
     await onboard(page, "en");
-    await page.route("**/api/calio/ai/settings", (route) =>
-      route.fulfill({
-        json: {
-          baseUrl: "https://provider.example/v1",
-          model: "synthetic/analysis",
-          calorieModel: "synthetic/search",
-          hasKey: true,
-          enabled: true,
-          revision: "synthetic-revision",
-        },
-      }),
-    );
-    const requests: unknown[] = [];
-    await page.route("**/api/calio/ai", async (route) => {
-      const payload = route.request().postDataJSON();
-      requests.push(payload);
-      const source = {
-        url: "https://nutrition.example/synthetic",
-        title: "Synthetic reference",
-      };
-      await route.fulfill({
-        json: {
-          requestId: payload.requestId,
-          model: "synthetic/search",
-          provider: "provider.example",
-          output: {
-            status: "known",
-            kcalPer100: 123,
-            basis: "per_100g",
-            source,
+    const requests: { model: string; input: unknown }[] = [];
+    await page.route(
+      "https://provider.example/v1/chat/completions",
+      (route) => {
+        expect(route.request().headers().authorization).toBe(
+          "Bearer synthetic-calorie-key",
+        );
+        const payload = route.request().postDataJSON();
+        requests.push({
+          model: payload.model,
+          input: JSON.parse(payload.messages[1].content),
+        });
+        const source = {
+          url: "https://nutrition.example/synthetic",
+          title: "Synthetic reference",
+        };
+        return route.fulfill({
+          headers: { "Access-Control-Allow-Origin": "*" },
+          json: {
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    status: "known",
+                    kcalPer100: 123,
+                    basis: "per_100g",
+                    source,
+                  }),
+                  annotations: [
+                    { type: "url_citation", url_citation: { url: source.url } },
+                  ],
+                },
+              },
+            ],
+            usage: { prompt_tokens: 100, completion_tokens: 50 },
           },
-          evidence: [
-            {
-              id: "sonar-1",
-              ...source,
-              accessedDate: "2026-11-26",
-              basis: "per_100g",
-              supportedNutrients: ["energy_kcal"],
-              supportsPortion: false,
-              supportsAddedSugar: false,
-              supportsRecipeYield: false,
-            },
-          ],
-          usage: { inputTokens: 100, outputTokens: 50 },
-        },
-      });
-    });
+        });
+      },
+    );
     await page.goto("/settings/integrations");
+    await page.getByLabel("API base URL").fill("https://provider.example/v1");
+    await page.getByLabel("Calorie search model").fill("synthetic/search");
+    await page.getByLabel("API key").fill("synthetic-calorie-key");
+    await page.getByRole("button", { name: "Save connection" }).click();
+    await expect(page.getByText("Connection settings saved.")).toBeVisible();
     const consent = page.getByRole("switch", {
       name: "Consent to AI processing",
     });
@@ -589,7 +592,7 @@ test.describe("synthetic AI-enabled browser", () => {
     ).toBeVisible();
     expect(requests).toHaveLength(1);
     expect(requests[0]).toMatchObject({
-      operation: "calories",
+      model: "synthetic/search",
       input: {
         nameFa: "",
         nameEn: "Synthetic dish",
@@ -659,76 +662,57 @@ test("Persian date shortcuts use Eastern numerals and notifications dismiss afte
   await expect(toast).toHaveCount(0);
 });
 
-test.describe("intercepted connection settings", () => {
+test.describe("browser provider connection", () => {
   test.use({ serviceWorkers: "block" });
-  test("connection settings recover the local session, save and test the edited connection", async ({
+  test("connection settings save offline, keep the key private and test the provider directly", async ({
     page,
+    context,
   }) => {
-    await onboard(page, "en");
-    let config = {
-      baseUrl: "https://iranrouter.net/api/v1",
-      model: "openai/gpt-6-luna",
-      calorieModel: "perplexity/sonar",
-      hasKey: false,
-      enabled: false,
-      revision: "synthetic-revision",
-    };
-    const updates: {
-      baseUrl: string;
-      model: string;
-      calorieModel: string;
-      apiKey?: string;
-    }[] = [];
-    let serviceAvailable = false;
-    let session = false;
-    await page.route("**/api/calio/ai/session", (route) => {
-      session = true;
-      return route.fulfill({ status: 204 });
-    });
-    await page.route("**/api/calio/ai/settings", async (route) => {
-      if (!serviceAvailable) return route.fulfill({ status: 503 });
-      if (!session) return route.fulfill({ status: 403 });
-      if (route.request().method() === "PUT") {
-        const input = route.request().postDataJSON();
-        updates.push(input);
-        config = {
-          ...config,
-          baseUrl: input.baseUrl,
-          model: input.model,
-          calorieModel: input.calorieModel,
-          hasKey: true,
-          enabled: true,
-        };
+    const calioApiRequests: string[] = [];
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname.startsWith("/api/calio/")) {
+        calioApiRequests.push(request.url());
       }
-      await route.fulfill({ json: config });
     });
-    const probes: unknown[] = [];
-    await page.route("**/api/calio/ai", (route) => {
-      const payload = route.request().postDataJSON();
-      probes.push(payload);
-      const { entry_id, revision, local_date } = payload.input.entries[0];
-      return route.fulfill({
-        json: {
-          requestId: payload.requestId,
-          model: config.model,
-          provider: "provider.example",
-          output: {
-            entries: [
+    const probes: string[] = [];
+    await page.route(
+      "https://provider.example/v1/chat/completions",
+      (route) => {
+        expect(route.request().headers().authorization).toBe(
+          "Bearer synthetic-ui-test-key",
+        );
+        const payload = route.request().postDataJSON();
+        expect(payload.model).toBe("synthetic/analysis");
+        const { entries } = JSON.parse(payload.messages[1].content);
+        const { entry_id, revision, local_date } = entries[0];
+        probes.push(entry_id);
+        return route.fulfill({
+          headers: { "Access-Control-Allow-Origin": "*" },
+          json: {
+            choices: [
               {
-                entry_id,
-                revision,
-                local_date,
-                items: [],
-                symptoms: [],
-                unparsed_text: [],
+                message: {
+                  content: JSON.stringify({
+                    entries: [
+                      {
+                        entry_id,
+                        revision,
+                        local_date,
+                        items: [],
+                        symptoms: [],
+                        unparsed_text: [],
+                      },
+                    ],
+                  }),
+                },
               },
             ],
+            usage: { prompt_tokens: 10, completion_tokens: 10 },
           },
-          evidence: [],
-          usage: { inputTokens: 10, outputTokens: 10 },
-        },
-      });
-    });
+        });
+      },
+    );
+    await onboard(page, "en");
     await page.goto("/settings/integrations");
     const analysis = page.getByLabel("Analysis and reporting model");
     const search = page.getByLabel("Calorie search model");
@@ -737,72 +721,51 @@ test.describe("intercepted connection settings", () => {
     const testAnalysis = page.getByRole("button", {
       name: "Test analysis model",
     });
-    const retry = page.getByRole("button", {
-      name: "Check connection service again",
-    });
-    await expect(retry).toBeVisible();
-    await expect(key).toBeEditable();
-    await expect(save).toBeDisabled();
-    await expect(testAnalysis).toBeDisabled();
-    await key.fill("synthetic-ui-test-key");
-    serviceAvailable = true;
-    await retry.click();
-    await expect(save).toBeEnabled();
-    await expect(key).toHaveValue("synthetic-ui-test-key");
-    expect(session).toBe(true);
+
     await expect(analysis).toHaveValue("openai/gpt-6-luna");
     await expect(search).toHaveValue("perplexity/sonar");
     await expect(save).toHaveCSS("min-height", "44px");
-    await expect(analysis).toHaveCSS("border-top-width", "1px");
-    await page.keyboard.press("Tab");
     await analysis.focus();
     await expect(analysis).toHaveCSS("outline-width", "2px");
     const axe = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
       .analyze();
     expect(axe.violations).toEqual([]);
+    await context.setOffline(true);
     await page.getByLabel("API base URL").fill("https://provider.example/v1");
     await analysis.fill("synthetic/analysis");
     await search.fill("synthetic/search");
-    await key.clear();
     await save.click();
     await expect(page.getByRole("alert")).toContainText("Enter an API key");
-    expect(updates).toHaveLength(0);
     await key.fill("synthetic-ui-test-key");
-    session = false;
+    await expect(save).toBeEnabled();
     await save.click();
-    await expect(
-      page
-        .getByRole("status")
-        .filter({ hasText: "Connection settings saved." }),
-    ).toBeVisible();
-    expect(updates).toHaveLength(1);
-    expect(updates[0]).toEqual({
-      baseUrl: "https://provider.example/v1",
-      model: "synthetic/analysis",
-      calorieModel: "synthetic/search",
-      apiKey: "synthetic-ui-test-key",
-    });
-    await expect(key).toHaveValue("");
+    await expect(page.getByText("Connection settings saved.")).toBeVisible();
     await expect(testAnalysis).toBeDisabled();
     await page
       .getByRole("switch", { name: "Consent to AI processing" })
       .click();
     await expect(testAnalysis).toBeEnabled();
+    await testAnalysis.click();
+    await expect(page.getByRole("alert")).toContainText(
+      "Connect to the internet",
+    );
+    await context.setOffline(false);
+    await page.reload();
+    await expect(analysis).toHaveValue("synthetic/analysis");
+    await expect(key).toHaveValue("");
+    await expect(
+      page.getByText("A key is saved. Leave this blank to keep it."),
+    ).toBeVisible();
     await key.fill("synthetic-unsaved-key");
     await expect(testAnalysis).toBeDisabled();
     await key.clear();
     await testAnalysis.click();
     await expect(
-      page
-        .getByRole("status")
-        .filter({ hasText: "The analysis model test passed." }),
+      page.getByText("The analysis model test passed."),
     ).toBeVisible();
-    expect(probes).toHaveLength(1);
-    expect(probes[0]).toMatchObject({
-      operation: "extract",
-      input: { entries: [{ entry_id: "test-synthetic" }] },
-    });
+    expect(probes).toEqual(["test-synthetic"]);
+    expect(calioApiRequests).toEqual([]);
   });
 });
 

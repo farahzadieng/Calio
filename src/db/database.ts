@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
+import type { AiSettingsUpdate } from "../ai/configuration";
 import type { Row } from "./records";
 
 export type DatabaseMode = "real" | "demo";
@@ -6,9 +7,16 @@ export const databaseNames = Object.freeze({
   real: "calio-real",
   demo: "calio-demo",
 });
-export const schemaVersion = 1;
+
+// Device-only credentials are excluded from the versioned backup format.
+type AiConnectionRecord = Omit<AiSettingsUpdate, "apiKey"> & {
+  id: "connection";
+  apiKey: string;
+  revision: string;
+};
 
 export class CalioDatabase extends Dexie {
+  declare ai_connection: EntityTable<AiConnectionRecord, "id">;
   declare profile: EntityTable<Row<"profile">, "id">;
   declare settings: EntityTable<Row<"settings">, "id">;
   declare journal_entries: EntityTable<Row<"journal_entries">, "id">;
@@ -46,7 +54,7 @@ export class CalioDatabase extends Dexie {
     ) {
       throw new Error("calio_invalid_demo_namespace");
     }
-    this.version(schemaVersion).stores({
+    this.version(1).stores({
       profile: "id",
       settings: "id",
       journal_entries: "id,localDate,status",
@@ -69,5 +77,6 @@ export class CalioDatabase extends Dexie {
       messages: "id,createdAt,kind",
       diagnostics: "id,createdAt",
     });
+    this.version(2).stores({ ai_connection: "id" });
   }
 }

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import fixture from "../../fixtures/extract-input.json";
 import research from "../../fixtures/research-output.json";
+import { readAiSettings, saveAiSettings } from "../../src/ai/browser";
 import { DemoTransport } from "../../src/ai/demo";
 import { type AiTransport } from "../../src/ai/contracts";
 import { CalioDatabase } from "../../src/db/database";
@@ -90,6 +91,39 @@ function addFixtureNotes(db: CalioDatabase) {
     ),
   );
 }
+
+it("stores the real API key separately from backups and requires a new key for a new provider", async () => {
+  await addSyntheticProfile(real);
+  const config = {
+    baseUrl: "https://provider.example/v1",
+    model: "synthetic/analysis",
+    calorieModel: "synthetic/search",
+  };
+  const key = "synthetic-device-only";
+  await saveAiSettings(real, { ...config, apiKey: key });
+  expect(await readAiSettings(real)).toEqual(config);
+  const backup = JSON.stringify(await exportBackup(real, fullFormat));
+  expect(backup).not.toContain(key);
+  expect(backup).not.toContain("ai_connection");
+  await real.settings.update("settings", { aiConsentAt: today.toISOString() });
+  await saveAiSettings(real, { ...config, model: "synthetic/replacement" });
+  expect((await real.ai_connection.get("connection"))?.apiKey).toBe(key);
+  expect((await real.settings.get("settings"))?.aiConsentAt).toBe(
+    today.toISOString(),
+  );
+  const newProvider = { ...config, baseUrl: "https://second.example/v1" };
+  await expect(saveAiSettings(real, newProvider)).rejects.toThrow(
+    "ai_key_required",
+  );
+  expect((await real.settings.get("settings"))?.aiConsentAt).toBe(
+    today.toISOString(),
+  );
+  await saveAiSettings(real, { ...newProvider, apiKey: "synthetic-other" });
+  expect((await real.settings.get("settings"))?.aiConsentAt).toBeNull();
+  await expect(
+    saveAiSettings(demo, { ...config, apiKey: key }),
+  ).rejects.toThrow("ai_mode_mismatch");
+});
 
 describe("local profile and journal", () => {
   it("opens empty namespaces and keeps a Persian draft over reload and optimistic edits", async () => {

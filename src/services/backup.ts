@@ -1,10 +1,6 @@
 import { z } from "zod";
 import type { Table } from "dexie";
-import {
-  schemaVersion,
-  type CalioDatabase,
-  type DatabaseMode,
-} from "../db/database";
+import type { CalioDatabase, DatabaseMode } from "../db/database";
 import { records, tableNames, type Row, type TableName } from "../db/records";
 import { timestamp } from "../domain/dates";
 import { normalizeFoodText } from "../domain/library";
@@ -28,10 +24,11 @@ const libraryTables = ["foods", "aliases", "portions"] as const;
 const maxBackupLength = 32 * 1024 * 1024;
 const maxRows = 100_000;
 const appVersion = "0.1.0";
+const backupSchemaVersion = 1;
 
 const header = z.strictObject({
   format: z.enum([fullFormat, libraryFormat]),
-  schemaVersion: z.literal(schemaVersion),
+  schemaVersion: z.literal(backupSchemaVersion),
   exportedAt: timestamp,
   appVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
   mode: z.enum(["demo", "real"]),
@@ -269,7 +266,7 @@ function envelope(
 ): Backup {
   return {
     format,
-    schemaVersion,
+    schemaVersion: backupSchemaVersion,
     exportedAt: now.toISOString(),
     appVersion,
     mode: db.mode,
@@ -284,7 +281,7 @@ export function serializeLibrary(
 ) {
   return JSON.stringify({
     format: libraryFormat,
-    schemaVersion,
+    schemaVersion: backupSchemaVersion,
     exportedAt: now.toISOString(),
     appVersion,
     mode,

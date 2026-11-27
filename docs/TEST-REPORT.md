@@ -150,3 +150,15 @@ The removed font was left out of the workspace. No live provider calls or physic
 | Synthetic PWA release in Chrome and desktop WebKit | Verified download when reconnecting, retention of the current page until close, activation of the replacement on offline reopening, and preservation of browser storage. |
 
 Physical iPhone standalone and live provider requests were not exercised.
+
+## 2026-11-27 — Calio 0.7.0 direct provider connection
+
+| Check | Outcome |
+|---|---|
+| Format, lint, typecheck, production builds | Passed. The Node bundle serves static files, and Workbox precaches 22 entries. |
+| Vitest | All 51 tests passed. Verified that a saved key stays outside backup exports and demo storage, model edits can retain it, and a provider URL change requires a new key and new consent. |
+| Chrome and desktop WebKit | All 24 browser tests passed, including axe. Verified saving while offline, retention across an offline reload, direct authenticated synthetic analysis and calorie requests, and zero calls to the Calio AI routes. |
+| Node static host | Verified SPA navigation, worker activation, HTTPS provider connections allowed by CSP, and HTTP 404 for the retired settings and completion routes. |
+| IranRouter CORS | A credential-free OPTIONS preflight for the planned app origin returned HTTP 204, allowing POST with Authorization and Content-Type. |
+
+No authenticated live provider request was sent. Physical iPhone standalone remains untested.

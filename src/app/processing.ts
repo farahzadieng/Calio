@@ -1,4 +1,4 @@
-import { GatewayTransport } from "../ai/browser";
+import { DirectAiTransport } from "../ai/browser";
 import type { CalioDatabase } from "../db/database";
 import { alignedWeekStart } from "../domain/calendar-periods";
 import { dateInTimeZone, type Locale } from "../domain/dates";
@@ -27,7 +27,7 @@ export async function runManualAnalysis(
   if (!notes.length) return "empty";
   if (!(await db.settings.get("settings"))?.aiConsentAt) return "unavailable";
   if (!navigator.onLine) return "error";
-  const transport = await GatewayTransport.connect();
+  const transport = await DirectAiTransport.connect(db);
   if (!transport) return "unavailable";
   if (!(await healthIsRecent(db))) return "sync";
   const results = await processNotes(db, transport, {
@@ -51,7 +51,7 @@ export async function runOnForeground(
   ]);
   if (!profile || !settings?.aiConsentAt) return [];
   const now = new Date();
-  const transport = await GatewayTransport.connect();
+  const transport = await DirectAiTransport.connect(db);
   if (!transport) return [];
   return processForegroundWeeks(db, transport, {
     now,

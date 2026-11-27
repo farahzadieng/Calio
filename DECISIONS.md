@@ -86,3 +86,7 @@ Proposed, not settled: exact color hex values, route hierarchy, supplement place
 - Load primary routes with the app and precache the full production bundle, including deferred features. Check for releases on foreground and reconnection and periodically while open. Activate the downloaded release after existing app windows close to avoid interrupting unsaved edits.
 - Keep the API key field editable while the service is unavailable and retain the draft during reconnection. Save the key through the existing authenticated gateway when it is reachable.
 - Restore the previously approved Bonyade Koodak WOFF2 because the production stylesheet still requires it and the offline build must include it.
+
+## 2026-11-27 — Device-owned API connection
+- The owner requested a static host and direct provider calls from each installed PWA. Save the key and provider settings in a dedicated IndexedDB table outside backups and diagnostics. Require consent before any provider request, and reset it when first saving or changing the provider URL.
+- Use browser-compatible HTTPS endpoints with CORS, versioned prompts and validated responses. The production and development hosts no longer expose AI gateway routes.

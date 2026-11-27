@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Button } from "../components/ui/primitives";
 import { CalioDatabase } from "../db/database";
-import { GatewayTransport } from "../ai/browser";
+import { DirectAiTransport } from "../ai/browser";
 import { requestAi } from "../ai/request";
 import { validateExtract } from "../ai/contracts";
 import { DemoTransport } from "../ai/demo";
@@ -55,7 +55,7 @@ export default function Diagnostics() {
         const blocked =
           !ok &&
           code === "live_ai" &&
-          (!settings.aiConsentAt || !(await GatewayTransport.connect()));
+          (!settings.aiConsentAt || !(await DirectAiTransport.connect(db)));
         await recordDiagnostic(demo, {
           code,
           test: true,
@@ -220,7 +220,7 @@ export default function Diagnostics() {
       t("آزمون اتصال زنده", "Test live connection"),
       async () => {
         if (!settings.aiConsentAt) return false;
-        const transport = await GatewayTransport.connect();
+        const transport = await DirectAiTransport.connect(db);
         if (!transport) return false;
         const input = {
           locale,

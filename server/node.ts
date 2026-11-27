@@ -2,33 +2,12 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createAiHttp, isAiPath } from "./ai-http";
-import { openAiSettings } from "./ai-settings";
-
 const appOrigin = new URL(
   process.env.CALIO_PUBLIC_ORIGIN ?? "http://127.0.0.1:4173",
 ).origin;
 const host = "127.0.0.1";
 const port = Number(process.env.CALIO_PORT ?? "4173");
-const upstreamIdentityToken = process.env.CALIO_AUTH_PROXY_TOKEN ?? "";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../dist");
-const aiSettings = await openAiSettings(
-  process.env.CALIO_AI_CONFIG_FILE || resolve(root, "../.calio-ai.json"),
-  {
-    apiKey:
-      process.env.CALIO_AI_API_KEY || process.env.IRANROUTER_API_KEY || "",
-    baseUrl: process.env.CALIO_AI_BASE_URL ?? process.env.IRANROUTER_BASE_URL,
-    model: process.env.CALIO_AI_MODEL ?? process.env.IRANROUTER_MODEL,
-    calorieModel: process.env.CALIO_AI_CALORIE_MODEL,
-    enabled: process.env.CALIO_AI_ENABLED === "true",
-  },
-);
-
-const aiHttp = createAiHttp({
-  appOrigin,
-  aiSettings,
-  proxyToken: upstreamIdentityToken,
-});
 
 const contentTypes: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -48,7 +27,7 @@ const security = {
   "Cross-Origin-Resource-Policy": "same-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy":
-    "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; connect-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'; worker-src 'self' blob:",
+    "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; connect-src 'self' https:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'; worker-src 'self' blob:",
 };
 
 const server = createServer(
@@ -61,12 +40,8 @@ const server = createServer(
         outgoing.writeHead(400, security).end();
         return;
       }
-      if (isAiPath(url.pathname)) {
-        await aiHttp.respond(request, outgoing, url, security);
-        return;
-      }
       if (
-        url.pathname.startsWith("/api/") ||
+        /^\/api(?:\/|$)/.test(url.pathname) ||
         (method !== "GET" && method !== "HEAD")
       ) {
         outgoing.writeHead(404, security).end();
@@ -94,13 +69,8 @@ const server = createServer(
       )
         ? "public, max-age=31536000, immutable"
         : "no-cache";
-      const localCookie =
-        file === resolve(root, "index.html")
-          ? aiHttp.ownerCookie(request.headers.host)
-          : {};
       outgoing.writeHead(200, {
         ...security,
-        ...localCookie,
         "Content-Type": type,
         "Content-Length": data.length,
         "Cache-Control": cacheControl,

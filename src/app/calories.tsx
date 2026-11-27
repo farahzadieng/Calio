@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Link, useLocation } from "react-router";
 import { z } from "zod";
-import { GatewayTransport } from "../ai/browser";
+import { DirectAiTransport } from "../ai/browser";
 import { Button, Input, Picker, Textarea } from "../components/ui/primitives";
 import type { MealItem } from "../db/records";
 import {
@@ -209,7 +209,7 @@ function CalorieLookup({
       }
       const transport =
         settings.aiConsentAt && db.mode === "real"
-          ? await GatewayTransport.connect()
+          ? await DirectAiTransport.connect(db)
           : null;
       if (!transport) {
         setError(

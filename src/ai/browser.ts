@@ -1,3 +1,9 @@
+import extractPrompt from "../../prompts/01-extract.md?raw";
+import weeklyPrompt from "../../prompts/04-weekly-report.md?raw";
+import extractSchema from "../../schemas/extract.schema.json?raw";
+import weeklySchema from "../../schemas/weekly.schema.json?raw";
+import type { CalioDatabase } from "../db/database";
+import { type AiSettingsUpdate } from "./configuration";
 import {
   AiFailure,
   type AiTransport,
@@ -5,80 +11,62 @@ import {
   type Operation,
   type RequestContext,
 } from "./contracts";
-import {
-  aiSettingsSchema,
-  type AiSettings,
-  type AiSettingsUpdate,
-} from "./configuration";
+import { providerCall } from "./provider";
 
-async function restoreLocalSession(signal: AbortSignal) {
-  const session = await fetch("/api/calio/ai/session", {
-    method: "POST",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: { "X-Calio-Request": "1" },
-    signal,
-  });
-  return session.status === 204;
+export async function readAiSettings(db: CalioDatabase) {
+  const record = await db.ai_connection.get("connection");
+  if (!record) return null;
+  const { baseUrl, model, calorieModel } = record;
+  return { baseUrl, model, calorieModel };
 }
 
-export async function readAiSettings() {
-  const options = {
-    credentials: "same-origin",
-    cache: "no-store",
-    signal: AbortSignal.timeout(5000),
-    headers: { "X-Calio-Request": "1" },
-  } as const;
-  let response = await fetch("/api/calio/ai/settings", options);
-  if (response.status === 403 && (await restoreLocalSession(options.signal))) {
-    response = await fetch("/api/calio/ai/settings", options);
-  }
-  if (!response.ok) throw new AiFailure("ai_settings_unavailable");
-  return aiSettingsSchema.parse(await response.json());
-}
-
-export async function saveAiSettings(input: AiSettingsUpdate) {
-  const options = {
-    method: "PUT",
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: { "Content-Type": "application/json", "X-Calio-Request": "1" },
-    body: JSON.stringify(input),
-    signal: AbortSignal.timeout(8000),
-  } as const;
-  let response = await fetch("/api/calio/ai/settings", options);
-  if (response.status === 403 && (await restoreLocalSession(options.signal))) {
-    response = await fetch("/api/calio/ai/settings", options);
-  }
-  if (!response.ok) {
-    const failure = await response.json().catch(() => null);
-    throw new AiFailure(
-      failure?.error === "ai_key_required"
-        ? failure.error
-        : "ai_settings_unavailable",
-    );
-  }
-  return aiSettingsSchema.parse(await response.json());
-}
-
-export class GatewayTransport implements AiTransport {
-  readonly mode = "real";
-  readonly model: string;
-  readonly calorieModel: string;
-
-  constructor(private readonly settings: AiSettings) {
-    this.model = settings.model;
-    this.calorieModel = settings.calorieModel;
-  }
-
-  static async connect() {
-    if (!navigator.onLine) return null;
-    try {
-      const settings = await readAiSettings();
-      return settings.enabled ? new GatewayTransport(settings) : null;
-    } catch {
-      return null;
+export async function saveAiSettings(
+  db: CalioDatabase,
+  input: AiSettingsUpdate,
+) {
+  if (db.mode !== "real") throw new AiFailure("ai_mode_mismatch");
+  return db.transaction("rw", db.ai_connection, db.settings, async () => {
+    const previous = await db.ai_connection.get("connection");
+    const compatible = previous?.baseUrl === input.baseUrl;
+    const apiKey = input.apiKey ?? (compatible ? previous.apiKey : undefined);
+    if (!apiKey) throw new AiFailure("ai_key_required");
+    const { baseUrl, model, calorieModel } = input;
+    await db.ai_connection.put({
+      id: "connection",
+      baseUrl,
+      model,
+      calorieModel,
+      apiKey,
+      revision: crypto.randomUUID(),
+    });
+    if (!compatible) {
+      await db.settings.update("settings", { aiConsentAt: null });
     }
+    return { baseUrl, model, calorieModel };
+  });
+}
+
+export class DirectAiTransport implements AiTransport {
+  readonly mode = "real";
+
+  private constructor(
+    private readonly db: CalioDatabase,
+    readonly model: string,
+    readonly calorieModel: string,
+    private readonly revision: string,
+  ) {}
+
+  static async connect(db: CalioDatabase) {
+    if (db.mode !== "real" || !navigator.onLine) return null;
+    const record = await db.ai_connection.get("connection");
+    return record
+      ? new DirectAiTransport(
+          db,
+          record.model,
+          record.calorieModel,
+          record.revision,
+        )
+      : null;
   }
 
   async request<Name extends Operation>(
@@ -87,40 +75,36 @@ export class GatewayTransport implements AiTransport {
     context: RequestContext,
   ) {
     if (!navigator.onLine) throw new AiFailure("ai_offline", true);
-    const response = await fetch("/api/calio/ai", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Calio-Config": this.settings.revision,
+    if (operation === "research" || operation === "portion") {
+      throw new AiFailure("ai_search_unavailable");
+    }
+    const [connection, settings] = await Promise.all([
+      this.db.ai_connection.get("connection"),
+      this.db.settings.get("settings"),
+    ]);
+    if (!settings?.aiConsentAt) throw new AiFailure("ai_consent_required");
+    if (!connection || connection.revision !== this.revision) {
+      throw new AiFailure("ai_configuration_changed", true);
+    }
+    context.signal.throwIfAborted();
+    const result = await providerCall(
+      {
+        ...connection,
+        prompt: (name) =>
+          name === "extract"
+            ? `${extractPrompt}\nExact response schema:\n${extractSchema}`
+            : `${weeklyPrompt}\nExact response schema:\n${weeklySchema}`,
       },
-      credentials: "same-origin",
-      cache: "no-store",
-      signal: context.signal,
-      body: JSON.stringify({
-        operation,
-        input,
-        requestId: context.requestId,
-        idempotencyKey: context.idempotencyKey,
-        schemaVersion: 1,
-      }),
-    });
-    if (response.status === 501) throw new AiFailure("ai_search_unavailable");
-    if (response.status === 401 || response.status === 403)
-      throw new AiFailure("ai_gateway_auth");
-    if (response.status === 429) {
-      const seconds = Number(response.headers.get("Retry-After"));
-      throw new AiFailure(
-        "ai_rate_limit",
-        true,
-        Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : undefined,
-      );
-    }
-    if (!response.ok)
-      throw new AiFailure("ai_gateway_error", response.status >= 500);
-    try {
-      return await response.json();
-    } catch {
-      throw new AiFailure("ai_response_invalid");
-    }
+      operation,
+      input,
+      undefined,
+      context.signal,
+    );
+    return {
+      ...result,
+      requestId: context.requestId,
+      model: operation === "calories" ? this.calorieModel : this.model,
+      provider: new URL(connection.baseUrl).hostname,
+    };
   }
 }

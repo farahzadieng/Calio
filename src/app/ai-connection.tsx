@@ -2,15 +2,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import { Button, Input, Toggle } from "../components/ui/primitives";
 import {
-  GatewayTransport,
+  DirectAiTransport,
   readAiSettings,
   saveAiSettings,
 } from "../ai/browser";
-import {
-  aiSettingsUpdateSchema,
-  defaultAiProvider,
-  type AiSettings,
-} from "../ai/configuration";
+import { aiSettingsUpdateSchema, defaultAiProvider } from "../ai/configuration";
 import { AiFailure, validateExtract } from "../ai/contracts";
 import { requestAi } from "../ai/request";
 import {
@@ -21,12 +17,20 @@ import { sha256 } from "../services/hash";
 import { useCalio } from "./state";
 
 type Status = "loading" | "unavailable" | "ready" | "saved";
-type Failure = "input" | "key" | "save" | "probe" | "citations";
+type Failure =
+  | "input"
+  | "key"
+  | "save"
+  | "probe"
+  | "citations"
+  | "offline"
+  | "network"
+  | "auth";
 
 export function AiConnection() {
   const { db, locale, settings, today, t } = useCalio();
   const [edits, setEdits] = useState<Partial<typeof defaultAiProvider>>({});
-  const [stored, setStored] = useState<AiSettings | null>(null);
+  const [stored, setStored] = useState<typeof defaultAiProvider | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [reload, setReload] = useState(0);
   const [error, setError] = useState<Failure | null>(null);
@@ -48,12 +52,11 @@ export function AiConnection() {
       draft.baseUrl !== stored.baseUrl ||
       draft.model !== stored.model ||
       draft.calorieModel !== stored.calorieModel);
-  const canTest =
-    stored?.enabled && !!settings.aiConsentAt && !connectionEdited;
+  const canTest = stored && !!settings.aiConsentAt && !connectionEdited;
 
   useEffect(() => {
     let active = true;
-    void readAiSettings()
+    void readAiSettings(db)
       .then((configuration) => {
         if (!active) return;
         setStored(configuration);
@@ -65,22 +68,16 @@ export function AiConnection() {
     return () => {
       active = false;
     };
-  }, [reload]);
+  }, [db, reload]);
 
   function retry() {
     setStatus("loading");
     setReload((value) => value + 1);
   }
 
-  useEffect(() => {
-    if (status !== "unavailable") return;
-    window.addEventListener("online", retry);
-    return () => window.removeEventListener("online", retry);
-  }, [status]);
-
   async function save(event: FormEvent) {
     event.preventDefault();
-    if (!stored || busy) return;
+    if (busy || status === "loading" || status === "unavailable") return;
     setError(null);
     setTested(null);
     const apiKey = keyInput.current?.value.trim();
@@ -92,18 +89,15 @@ export function AiConnection() {
       setError("input");
       return;
     }
-    const changesProvider = stored.baseUrl !== parsed.data.baseUrl;
-    if (!apiKey && (changesProvider || !stored.hasKey)) {
+    const changesProvider = stored?.baseUrl !== parsed.data.baseUrl;
+    if (!apiKey && changesProvider) {
       setError("key");
       keyInput.current?.focus();
       return;
     }
     setSaving(true);
     try {
-      if (changesProvider && settings.aiConsentAt) {
-        await db.settings.update("settings", { aiConsentAt: null });
-      }
-      const next = await saveAiSettings(parsed.data);
+      const next = await saveAiSettings(db, parsed.data);
       if (keyInput.current) keyInput.current.value = "";
       setHasDraftKey(false);
       setStored(next);
@@ -122,12 +116,17 @@ export function AiConnection() {
 
   async function probe(operation: "calories" | "extract") {
     if (!canTest) return;
+    if (!navigator.onLine) {
+      setTested(null);
+      setError("offline");
+      return;
+    }
     setTesting(operation);
     setError(null);
     setTested(null);
     try {
-      const transport = await GatewayTransport.connect();
-      if (!transport) throw new Error("ai_gateway");
+      const transport = await DirectAiTransport.connect(db);
+      if (!transport) throw new AiFailure("ai_configuration_changed");
       const key = await sha256(crypto.randomUUID());
       if (operation === "extract") {
         const input = {
@@ -160,8 +159,17 @@ export function AiConnection() {
         }
       }
       setTested(operation);
-    } catch {
-      setError("probe");
+    } catch (failure) {
+      const code = failure instanceof AiFailure ? failure.code : "";
+      setError(
+        code === "provider_network"
+          ? "network"
+          : code === "provider_auth"
+            ? "auth"
+            : code === "ai_evidence"
+              ? "citations"
+              : "probe",
+      );
     } finally {
       setTesting(null);
     }
@@ -183,6 +191,18 @@ export function AiConnection() {
     probe: t(
       "پاسخ معتبر از مدل دریافت نشد. کلید، نشانی و نام مدل را بررسی کنید.",
       "The model did not return a valid response. Check the key, URL and model ID.",
+    ),
+    offline: t(
+      "برای آزمون اتصال به اینترنت نیاز است.",
+      "Connect to the internet to run a test.",
+    ),
+    network: t(
+      "دسترسی مستقیم به ارائه‌دهنده ممکن نشد. نشانی، شبکه و پشتیبانی CORS ارائه‌دهنده را بررسی کنید.",
+      "Could not reach the provider directly. Check its URL, network access, and browser CORS support.",
+    ),
+    auth: t(
+      "ارائه‌دهنده کلید یا دسترسی این درخواست را رد کرد.",
+      "The provider rejected the key or access to this request.",
     ),
     citations: t(
       "مدل جست‌وجو پاسخ داد ولی منبع قابل‌تأیید نداشت.",
@@ -247,7 +267,7 @@ export function AiConnection() {
           disabled={busy}
           onChange={(event) => setHasDraftKey(!!event.target.value.trim())}
           hint={
-            stored?.hasKey
+            stored
               ? t(
                   "کلید ذخیره شده است. برای نگه‌داشتن آن این کادر را خالی بگذارید.",
                   "A key is saved. Leave this blank to keep it.",
@@ -256,7 +276,10 @@ export function AiConnection() {
           }
         />
         <div className="actions">
-          <Button type="submit" disabled={busy || !stored}>
+          <Button
+            type="submit"
+            disabled={busy || status === "loading" || status === "unavailable"}
+          >
             {saving
               ? t("در حال ذخیره…", "Saving…")
               : t("ذخیرهٔ اتصال", "Save connection")}
@@ -274,8 +297,8 @@ export function AiConnection() {
       />
       <p className="muted small">
         {t(
-          "با رضایت شما، متن لازم و خلاصهٔ گزارش به ارائه‌دهندهٔ انتخابی می‌رسد. مدل جست‌وجو فقط مشخصات خوراکی را دریافت می‌کند. کلید در سرویس محلی نگهداری می‌شود.",
-          "With your consent, the selected provider receives relevant text and report data. The search model receives food details only. Your key is kept by the local service.",
+          "با رضایت شما، متن لازم و خلاصهٔ گزارش به ارائه‌دهندهٔ انتخابی می‌رسد. مدل جست‌وجو فقط مشخصات خوراکی را دریافت می‌کند. کلید روی همین دستگاه ذخیره می‌شود و برنامه مستقیماً با ارائه‌دهنده ارتباط می‌گیرد.",
+          "With your consent, the selected provider receives relevant text and report data. The search model receives food details only. Your key is stored on this device, and Calio connects directly to your provider.",
         )}
       </p>
       <p role="status" className="muted">
@@ -283,8 +306,8 @@ export function AiConnection() {
           t("در حال خواندن وضعیت اتصال…", "Checking connection settings…")}
         {status === "unavailable" &&
           t(
-            "برای ذخیرهٔ اتصال، سرویس کالیو باید در دسترس باشد. بعد از برقراری اتصال دوباره بررسی کنید.",
-            "Saving requires a connection to the Calio service. Check again when it is reachable.",
+            "خواندن تنظیمات از حافظهٔ این دستگاه ممکن نشد.",
+            "Could not read connection settings from device storage.",
           )}
         {status === "saved" &&
           !testing &&
@@ -307,7 +330,7 @@ export function AiConnection() {
       {status === "unavailable" && (
         <div className="actions">
           <Button tone="quiet" onClick={retry}>
-            {t("بررسی دوبارهٔ سرویس اتصال", "Check connection service again")}
+            {t("تلاش دوباره برای خواندن تنظیمات", "Retry reading settings")}
           </Button>
         </div>
       )}
@@ -328,7 +351,7 @@ export function AiConnection() {
         </Button>
       </div>
       <p className="muted small">
-        {!stored?.enabled || connectionEdited
+        {!stored || connectionEdited
           ? t(
               "ابتدا تنظیمات اتصال را ذخیره کنید.",
               "Save the connection settings first.",

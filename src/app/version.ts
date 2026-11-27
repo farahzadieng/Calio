@@ -14,13 +14,11 @@ export function displayAppVersion(locale: Locale) {
 
 export const latestReleaseNotes = {
   fa: [
-    "کلید API حتی پیش از اتصال به سرویس قابل وارد کردن است.",
-    "صفحه‌ها در اولین اجرای آنلاین برای استفادهٔ آفلاین ذخیره می‌شوند.",
-    "نسخهٔ تازه در پس‌زمینه دانلود می‌شود و پس از بستن همهٔ پنجره‌های کالیو در اجرای بعدی فعال می‌شود.",
+    "تنظیمات اتصال و کلید API حتی آفلاین روی همین دستگاه ذخیره می‌شوند.",
+    "آزمون مدل و پردازش هوش مصنوعی مستقیماً به ارائه‌دهندهٔ انتخابی وصل می‌شوند.",
   ],
   en: [
-    "Enter an API key even before the connection service is reachable.",
-    "The first online launch caches the app pages for offline use.",
-    "Updates download in the background and take effect after all Calio windows close.",
+    "Save connection settings and your API key on this device, even offline.",
+    "Model tests and AI processing connect directly to your provider.",
   ],
 } satisfies Record<Locale, readonly string[]>;
