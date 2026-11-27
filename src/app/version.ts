@@ -14,11 +14,13 @@ export function displayAppVersion(locale: Locale) {
 
 export const latestReleaseNotes = {
   fa: [
-    "ویرایش نشانی، کلید و مدل‌های AI در نسخهٔ محلی پس از راه‌اندازی دوبارهٔ سرویس بازیابی می‌شود.",
-    "دکمه‌های آزمون اتصال و مراحل فعال‌کردن آن‌ها در تنظیمات نمایش داده می‌شوند.",
+    "کلید API حتی پیش از اتصال به سرویس قابل وارد کردن است.",
+    "صفحه‌ها در اولین اجرای آنلاین برای استفادهٔ آفلاین ذخیره می‌شوند.",
+    "نسخهٔ تازه در پس‌زمینه دانلود می‌شود و پس از بستن همهٔ پنجره‌های کالیو در اجرای بعدی فعال می‌شود.",
   ],
   en: [
-    "Edit the AI endpoint, key and model IDs after the local service restarts.",
-    "Settings shows both model tests and how to enable them.",
+    "Enter an API key even before the connection service is reachable.",
+    "The first online launch caches the app pages for offline use.",
+    "Updates download in the background and take effect after all Calio windows close.",
   ],
 } satisfies Record<Locale, readonly string[]>;

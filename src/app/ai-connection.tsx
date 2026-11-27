@@ -25,7 +25,7 @@ type Failure = "input" | "key" | "save" | "probe" | "citations";
 
 export function AiConnection() {
   const { db, locale, settings, today, t } = useCalio();
-  const [draft, setDraft] = useState(defaultAiProvider);
+  const [edits, setEdits] = useState<Partial<typeof defaultAiProvider>>({});
   const [stored, setStored] = useState<AiSettings | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [reload, setReload] = useState(0);
@@ -36,6 +36,12 @@ export function AiConnection() {
   const [hasDraftKey, setHasDraftKey] = useState(false);
   const keyInput = useRef<HTMLInputElement>(null);
   const busy = saving || !!testing;
+  const provider = stored ?? defaultAiProvider;
+  const draft = {
+    baseUrl: edits.baseUrl ?? provider.baseUrl,
+    model: edits.model ?? provider.model,
+    calorieModel: edits.calorieModel ?? provider.calorieModel,
+  };
   const connectionEdited =
     stored !== null &&
     (hasDraftKey ||
@@ -51,11 +57,6 @@ export function AiConnection() {
       .then((configuration) => {
         if (!active) return;
         setStored(configuration);
-        setDraft({
-          baseUrl: configuration.baseUrl,
-          model: configuration.model,
-          calorieModel: configuration.calorieModel,
-        });
         setStatus("ready");
       })
       .catch(() => {
@@ -66,8 +67,20 @@ export function AiConnection() {
     };
   }, [reload]);
 
+  function retry() {
+    setStatus("loading");
+    setReload((value) => value + 1);
+  }
+
+  useEffect(() => {
+    if (status !== "unavailable") return;
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
+  }, [status]);
+
   async function save(event: FormEvent) {
     event.preventDefault();
+    if (!stored || busy) return;
     setError(null);
     setTested(null);
     const apiKey = keyInput.current?.value.trim();
@@ -79,9 +92,8 @@ export function AiConnection() {
       setError("input");
       return;
     }
-    const changesProvider =
-      stored !== null && stored.baseUrl !== parsed.data.baseUrl;
-    if (!apiKey && (changesProvider || !stored?.hasKey)) {
+    const changesProvider = stored.baseUrl !== parsed.data.baseUrl;
+    if (!apiKey && (changesProvider || !stored.hasKey)) {
       setError("key");
       keyInput.current?.focus();
       return;
@@ -95,11 +107,7 @@ export function AiConnection() {
       if (keyInput.current) keyInput.current.value = "";
       setHasDraftKey(false);
       setStored(next);
-      setDraft({
-        baseUrl: next.baseUrl,
-        model: next.model,
-        calorieModel: next.calorieModel,
-      });
+      setEdits({});
       setStatus("saved");
     } catch (failure) {
       setError(
@@ -201,7 +209,7 @@ export function AiConnection() {
           autoComplete="off"
           disabled={busy || status === "loading"}
           onChange={(event) =>
-            setDraft({ ...draft, baseUrl: event.target.value })
+            setEdits({ ...edits, baseUrl: event.target.value })
           }
         />
         <div className="columns">
@@ -213,7 +221,7 @@ export function AiConnection() {
             autoComplete="off"
             disabled={busy || status === "loading"}
             onChange={(event) =>
-              setDraft({ ...draft, model: event.target.value })
+              setEdits({ ...edits, model: event.target.value })
             }
           />
           <Input
@@ -224,7 +232,7 @@ export function AiConnection() {
             autoComplete="off"
             disabled={busy || status === "loading"}
             onChange={(event) =>
-              setDraft({ ...draft, calorieModel: event.target.value })
+              setEdits({ ...edits, calorieModel: event.target.value })
             }
           />
         </div>
@@ -236,7 +244,7 @@ export function AiConnection() {
           spellCheck={false}
           autoComplete="off"
           maxLength={4096}
-          disabled={busy || status === "loading" || status === "unavailable"}
+          disabled={busy}
           onChange={(event) => setHasDraftKey(!!event.target.value.trim())}
           hint={
             stored?.hasKey
@@ -275,8 +283,8 @@ export function AiConnection() {
           t("در حال خواندن وضعیت اتصال…", "Checking connection settings…")}
         {status === "unavailable" &&
           t(
-            "سرویس اتصال در این نشانی در دسترس نیست. کالیو را از نشانی سرویس محلی باز کنید یا دوباره بررسی کنید.",
-            "The connection service is unavailable at this address. Open Calio from its local service or check again.",
+            "برای ذخیرهٔ اتصال، سرویس کالیو باید در دسترس باشد. بعد از برقراری اتصال دوباره بررسی کنید.",
+            "Saving requires a connection to the Calio service. Check again when it is reachable.",
           )}
         {status === "saved" &&
           !testing &&
@@ -298,13 +306,7 @@ export function AiConnection() {
       )}
       {status === "unavailable" && (
         <div className="actions">
-          <Button
-            tone="quiet"
-            onClick={() => {
-              setStatus("loading");
-              setReload((value) => value + 1);
-            }}
-          >
+          <Button tone="quiet" onClick={retry}>
             {t("بررسی دوبارهٔ سرویس اتصال", "Check connection service again")}
           </Button>
         </div>

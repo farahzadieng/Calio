@@ -81,3 +81,8 @@ Proposed, not settled: exact color hex values, route hierarchy, supplement place
 
 - Restore expired local owner sessions through a same-origin request outside the PWA cache. Use the same authenticated settings and provider gateway in loopback Vite development, with a separate private configuration file. Static preview requires the Node service for AI.
 - Keep both model tests visible. Enable them after saving and granting consent, and require saving edits before testing. Tests use synthetic inputs and can incur provider charges.
+
+## 2026-11-27 — Offline-first navigation and connection editing
+- Load primary routes with the app and precache the full production bundle, including deferred features. Check for releases on foreground and reconnection and periodically while open. Activate the downloaded release after existing app windows close to avoid interrupting unsaved edits.
+- Keep the API key field editable while the service is unavailable and retain the draft during reconnection. Save the key through the existing authenticated gateway when it is reachable.
+- Restore the previously approved Bonyade Koodak WOFF2 because the production stylesheet still requires it and the offline build must include it.

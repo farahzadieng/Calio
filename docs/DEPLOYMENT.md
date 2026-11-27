@@ -17,7 +17,7 @@ On a direct loopback install, the Node adapter issues an HttpOnly, same-site own
 
 The local PWA renews its owner session when the Node service restarts. `npm run dev` also includes the gateway on loopback and uses the ignored `.calio-ai.json.dev` file, independently of the Node installation. Open the exact address printed by the server. If the connection service is temporarily unavailable, use **Check connection service again** in Settings.
 
-The service worker precaches static assets and omits all `/api/` responses. Browser records remain in IndexedDB. The visible logo, favicon, Apple Touch icon link, and install manifest follow the selected theme. The home screen stores the installed icon according to browser and system behavior, and may require a new installation to pick up a different icon. Back up the diary before removing an existing iPhone installation.
+The first online production launch precaches the complete app, including deferred features, fonts, and images. Calio checks for updates on startup, on return to the foreground or network, and hourly while visible. A downloaded release activates after all open Calio windows close. The service worker omits all `/api/` responses. Browser records remain in IndexedDB. The visible logo, favicon, Apple Touch icon link, and install manifest follow the selected theme. The home screen stores the installed icon according to browser and system behavior, and may require a new installation to pick up a different icon. Back up the diary before removing an existing iPhone installation.
 
 ## Search capability and test
 

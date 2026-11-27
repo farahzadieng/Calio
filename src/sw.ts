@@ -20,6 +20,7 @@ registerRoute(
   }),
 );
 clientsClaim();
+// Older app versions can still explicitly apply a waiting update.
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   if (event.data?.type === "SKIP_WAITING") event.waitUntil(self.skipWaiting());
 });

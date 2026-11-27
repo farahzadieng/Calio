@@ -1,7 +1,5 @@
 import {
   StrictMode,
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -27,22 +25,21 @@ import {
   X,
 } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useRegisterSW } from "virtual:pwa-register/react";
 import { DirectionProvider } from "../components/ui/direction";
 import { Button } from "../components/ui/primitives";
 import { CalioDatabase } from "../db/database";
 import { dateInTimeZone, type Locale } from "../domain/dates";
 import { appState, choose, type AppState } from "./state";
 import { Brand } from "./onboarding";
+import { runOnForeground } from "./processing";
 import Onboarding from "./onboarding";
+import Journal from "./journal";
+import Drinks from "./drinks";
+import Insights from "./insights";
+import Profile from "./profile";
+import Supplements from "./supplements";
+import Settings from "./settings";
 import "../styles/calio.css";
-
-const Journal = lazy(() => import("./journal"));
-const Drinks = lazy(() => import("./drinks"));
-const Insights = lazy(() => import("./insights"));
-const Profile = lazy(() => import("./profile"));
-const Supplements = lazy(() => import("./supplements"));
-const Settings = lazy(() => import("./settings"));
 
 const db = new CalioDatabase("real");
 
@@ -141,8 +138,7 @@ function Application() {
     const foreground = () => {
       if (document.visibilityState !== "visible" || pending) return;
       setClock(new Date());
-      pending = import("./processing")
-        .then(({ runOnForeground }) => runOnForeground(db))
+      pending = runOnForeground(db)
         .then((results) => {
           if (results.some(({ state }) => state === "awaiting_health")) {
             notify(
@@ -176,29 +172,14 @@ function Application() {
     };
   }, [consent, notify, profileId, selectedLanguage]);
 
-  const update = useRegisterSW();
-  const updateReady = update.needRefresh[0];
-  const noticeView = (notice || updateReady) && (
+  const noticeView = notice && (
     <div className="global-notice">
-      {updateReady && (
-        <div className="notice" role="status">
-          <span>{t("نسخهٔ تازه آماده است.", "An update is available.")}</span>
-          <Button
-            tone="quiet"
-            onClick={() => void update.updateServiceWorker(true)}
-          >
-            {t("بارگیری نسخهٔ تازه", "Reload to update")}
-          </Button>
-        </div>
-      )}
-      {notice && (
-        <Toast
-          key={notice.id}
-          notice={notice}
-          locale={locale}
-          onDismiss={dismissNotice}
-        />
-      )}
+      <Toast
+        key={notice.id}
+        notice={notice}
+        locale={locale}
+        onDismiss={dismissNotice}
+      />
     </div>
   );
 
@@ -386,35 +367,31 @@ function Shell({ locale }: { locale: Locale }) {
           {settingsLink}
         </aside>
         <main className="main" id="calio-main" tabIndex={-1}>
-          <Suspense
-            fallback={<p role="status">{t("در حال بارگذاری…", "Loading…")}</p>}
+          <div
+            className="route-content"
+            data-slide={direction}
+            key={location.pathname}
           >
-            <div
-              className="route-content"
-              data-slide={direction}
-              key={location.pathname}
-            >
-              <Routes>
-                <Route path="/" element={<Journal />} />
-                <Route path="/drinks" element={<Drinks />} />
-                <Route path="/insights/*" element={<Insights />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/profile/supplements" element={<Supplements />} />
-                <Route path="/settings/*" element={<Settings />} />
-                <Route
-                  path="*"
-                  element={
-                    <section className="panel">
-                      <h1>{t("صفحه پیدا نشد", "Page not found")}</h1>
-                      <Link to="/" className="button button--quiet">
-                        {t("بازگشت به دفترچه", "Back to journal")}
-                      </Link>
-                    </section>
-                  }
-                />
-              </Routes>
-            </div>
-          </Suspense>
+            <Routes>
+              <Route path="/" element={<Journal />} />
+              <Route path="/drinks" element={<Drinks />} />
+              <Route path="/insights/*" element={<Insights />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/supplements" element={<Supplements />} />
+              <Route path="/settings/*" element={<Settings />} />
+              <Route
+                path="*"
+                element={
+                  <section className="panel">
+                    <h1>{t("صفحه پیدا نشد", "Page not found")}</h1>
+                    <Link to="/" className="button button--quiet">
+                      {t("بازگشت به دفترچه", "Back to journal")}
+                    </Link>
+                  </section>
+                }
+              />
+            </Routes>
+          </div>
         </main>
       </div>
     </>
@@ -430,3 +407,22 @@ createRoot(root).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// Keep the current app open while the complete replacement is cached.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  void navigator.serviceWorker
+    .register("/sw.js", { updateViaCache: "none" })
+    .then((registration) => {
+      const checkForUpdate = () => {
+        if (document.visibilityState === "visible" && navigator.onLine) {
+          void registration.update().catch(() => {});
+        }
+      };
+      document.addEventListener("visibilitychange", checkForUpdate);
+      window.addEventListener("online", checkForUpdate);
+      window.setInterval(checkForUpdate, 60 * 60 * 1000);
+    })
+    .catch(() => {
+      // The app can still run online when storage or registration is unavailable.
+    });
+}

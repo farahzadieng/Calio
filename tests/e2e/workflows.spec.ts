@@ -150,6 +150,14 @@ test("Persian journal drafts, save, PWA offline reload, edit and delete", async 
     .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
     .toBe(true);
   await context.setOffline(true);
+  await page.getByRole("link", { name: "تحلیل", exact: true }).click();
+  await expect(page).toHaveURL(/\/insights$/);
+  await page.reload();
+  await expect(page.locator("#calio-main h1")).toBeVisible();
+  await page.goto("/settings/integrations");
+  await expect(page.getByLabel("کلید API")).toBeEditable();
+  await page.getByRole("link", { name: "دفترچه", exact: true }).click();
+  await expect(textarea).toHaveValue("یادداشت ساختگی ۲ لیوان چای");
   await page.getByRole("button", { name: "ذخیره", exact: true }).click();
   await expect(page.getByText("یادداشت آفلاین ذخیره شد.")).toBeVisible();
   await page.reload();
@@ -729,13 +737,18 @@ test.describe("intercepted connection settings", () => {
     const testAnalysis = page.getByRole("button", {
       name: "Test analysis model",
     });
-    await expect(key).toBeDisabled();
-    await expect(testAnalysis).toBeDisabled();
-    serviceAvailable = true;
-    await page
-      .getByRole("button", { name: "Check connection service again" })
-      .click();
+    const retry = page.getByRole("button", {
+      name: "Check connection service again",
+    });
+    await expect(retry).toBeVisible();
     await expect(key).toBeEditable();
+    await expect(save).toBeDisabled();
+    await expect(testAnalysis).toBeDisabled();
+    await key.fill("synthetic-ui-test-key");
+    serviceAvailable = true;
+    await retry.click();
+    await expect(save).toBeEnabled();
+    await expect(key).toHaveValue("synthetic-ui-test-key");
     expect(session).toBe(true);
     await expect(analysis).toHaveValue("openai/gpt-6-luna");
     await expect(search).toHaveValue("perplexity/sonar");
@@ -751,6 +764,7 @@ test.describe("intercepted connection settings", () => {
     await page.getByLabel("API base URL").fill("https://provider.example/v1");
     await analysis.fill("synthetic/analysis");
     await search.fill("synthetic/search");
+    await key.clear();
     await save.click();
     await expect(page.getByRole("alert")).toContainText("Enter an API key");
     expect(updates).toHaveLength(0);

@@ -68,7 +68,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "prompt",
       injectRegister: false,
       strategies: "injectManifest",
       srcDir: "src",
@@ -77,7 +76,7 @@ export default defineConfig({
       manifest: false,
       injectManifest: {
         globPatterns: [
-          "**/*.{html,js,css,png,jpg,webp,woff2,ico,svg,webmanifest}",
+          "**/*.{html,js,css,png,jpg,webp,woff,woff2,ico,svg,webmanifest}",
         ],
       },
     }),

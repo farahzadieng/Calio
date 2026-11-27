@@ -139,3 +139,14 @@ Physical iPhone standalone was not exercised. No live AI requests were made.
 | Full browser suite | 18 passed and 6 failed. All failures were font checks in the journal, offline asset cache and Persian digit scenarios across the two browsers. The browser could not load or cache the removed WOFF2. |
 
 The removed font was left out of the workspace. No live provider calls or physical iPhone tests were performed.
+
+## 2026-11-27 — Calio 0.6.0 offline launch and API key editing
+
+| Check | Outcome |
+|---|---|
+| Format, lint, typecheck and Vitest | Passed. All 50 unit and integration tests passed. |
+| Client and Node builds | Passed. Workbox precached 22 entries, including the approved WOFF2 and deferred features, totaling about 2.5 MiB. The running loopback server returned 200 for the app, settings, worker and font. |
+| Chrome and desktop WebKit | All 24 browser tests passed, including axe. Verified offline navigation and reload on previously unvisited routes, an editable API key field during a connection outage, draft retention through retry, and authenticated synthetic saves. |
+| Synthetic PWA release in Chrome and desktop WebKit | Verified download when reconnecting, retention of the current page until close, activation of the replacement on offline reopening, and preservation of browser storage. |
+
+Physical iPhone standalone and live provider requests were not exercised.
