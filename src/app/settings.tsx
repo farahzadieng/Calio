@@ -24,7 +24,7 @@ import {
   Toggle,
 } from "../components/ui/primitives";
 import { settingsSchema, estimateEnergy } from "../domain/profile";
-import { foodSchema, type Food } from "../domain/library";
+import { foodSchema, servingUnitLabel, type Food } from "../domain/library";
 import {
   nutrientKeys,
   nutrientMetadata,
@@ -629,6 +629,10 @@ function FoodLibrary() {
   const [draft, setDraft] = useState<Food | null>(null);
   const [error, setError] = useState("");
   const foods = useLiveQuery(() => db.foods.toArray(), [db], []);
+  const portions = useLiveQuery(() => db.portions.toArray(), [db], []);
+  const formatAmount = numberFormatter(locale, { maximumFractionDigits: 2 });
+  const calories = (amount: number) =>
+    `${formatAmount.format(amount)} ${t("کیلوکالری", "kcal")}`;
   const visible = foods.filter((food) =>
     [food.nameFa, food.nameEn, food.variant, food.brand].some((name) =>
       name?.toLowerCase().includes(query.trim().toLowerCase()),
@@ -721,12 +725,39 @@ function FoodLibrary() {
               </h3>
               <p className="muted">
                 <bdi>
-                  {food.basis === "per_100ml" ? "100 mL" : "100 g"} · v
-                  {numberFormatter(locale, { useGrouping: false }).format(
-                    food.version,
+                  {food.basis === "per_100ml" ? "100 mL" : "100 g"}
+                  {food.nutrients.energy_kcal !== null && (
+                    <> · {calories(food.nutrients.energy_kcal)}</>
                   )}
                 </bdi>
               </p>
+              {portions
+                .filter((portion) => portion.foodId === food.id)
+                .map((portion) => {
+                  const amount =
+                    food.basis === "per_100ml"
+                      ? portion.mlPerUnit
+                      : portion.gramsPerUnit;
+                  const energy =
+                    portion.energyKcalPerUnit ??
+                    (amount === null || food.nutrients.energy_kcal === null
+                      ? null
+                      : (amount * food.nutrients.energy_kcal) / 100);
+                  return (
+                    <p className="muted" key={portion.id}>
+                      {formatAmount.format(1)}{" "}
+                      {servingUnitLabel(portion.unit, locale)}
+                      {amount !== null && (
+                        <>
+                          {" "}
+                          · {formatAmount.format(amount)}{" "}
+                          {food.basis === "per_100ml" ? "mL" : "g"}
+                        </>
+                      )}
+                      {energy !== null && <> · {calories(energy)}</>}
+                    </p>
+                  );
+                })}
             </div>
             <Button
               tone="quiet"

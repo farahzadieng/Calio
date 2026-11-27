@@ -1,3 +1,4 @@
+import { servingUnitLabel } from "../domain/library";
 import { correctFoodAmount } from "../services/meal-corrections";
 import { applicableReferences } from "../domain/references";
 import { lazy, Suspense, useState } from "react";
@@ -357,8 +358,12 @@ function DailyView() {
                   : item.nameEn || item.nameFa}
               </h3>
               <p className="muted">
-                {number(item.originalQuantity)} <bdi>{item.originalUnit}</bdi> ·{" "}
-                {number(item.grams)} g
+                {number(item.originalQuantity)}{" "}
+                <bdi>{servingUnitLabel(item.originalUnit, locale)}</bdi>
+                {item.grams !== null && <> · {number(item.grams)} g</>}
+                {item.ml !== null && <> · {number(item.ml)} mL</>}
+                {" · "}
+                {number(item.nutrients.energy_kcal)} {t("کیلوکالری", "kcal")}
               </p>
               {item.status !== "calculated" && (
                 <p className="field-hint">

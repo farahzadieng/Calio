@@ -11,7 +11,15 @@ import {
   type CalorieAnswer,
   type CalorieTarget,
 } from "../domain/calorie-lookup";
-import { findFood, foodSchema, type Food } from "../domain/library";
+import {
+  findFood,
+  findPortion,
+  foodSchema,
+  normalizeFoodText,
+  normalizeServingUnit,
+  portionSchema,
+  type Food,
+} from "../domain/library";
 import {
   findIranianCalorieReference,
   iranianReferenceFood,
@@ -27,11 +35,13 @@ async function storedFor(db: CalioDatabase, target: CalorieTarget) {
     db.foods.toArray(),
     db.aliases.toArray(),
   ]);
-  return findFood(
-    target,
-    foods.filter((food) => food.basis === target.basis),
-    aliases,
-  );
+  const candidates = foods.filter((food) => food.basis === target.basis);
+  const matched = findFood(target, candidates, aliases);
+  if (matched) return matched;
+  const published = findIranianCalorieReference(target);
+  return published
+    ? findFood(iranianReferenceFood(published), candidates, aliases)
+    : null;
 }
 
 export async function findLocalCalorieFood(
@@ -117,6 +127,97 @@ export async function saveCalorieAnswer(
   });
 }
 
+async function cachedServing(
+  db: CalioDatabase,
+  food: Food | null,
+  unit: string,
+) {
+  return (
+    food &&
+    findPortion(
+      food,
+      unit,
+      await db.portions.where("foodId").equals(food.id).toArray(),
+    )
+  );
+}
+
+async function saveServing(
+  db: CalioDatabase,
+  target: CalorieTarget,
+  unit: string,
+  answer: CalorieAnswer,
+  evidence: Awaited<ReturnType<typeof requestAi>>["evidence"],
+) {
+  const serving = answer.serving;
+  if (!serving || normalizeServingUnit(serving.unit) !== unit) return;
+  const cited = evidence.find(
+    (entry) =>
+      entry.supportsPortion &&
+      entry.basis === target.basis &&
+      citationUrl(entry.url) === citationUrl(serving.source.url),
+  );
+  if (!cited) return;
+  const cheese = /cheese|پنیر/.test(
+    normalizeFoodText(target.nameEn + " " + target.nameFa),
+  );
+  const smallCheese = cheese && ["matchbox", "block"].includes(unit);
+  const maxAmount = smallCheese ? 120 : unit === "handful" ? 250 : 1000;
+  const maxEnergy = smallCheese ? 500 : unit === "handful" ? 1000 : 2500;
+  if (
+    (serving.amountPerUnit ?? 0) > maxAmount ||
+    (serving.kcalPerUnit ?? 0) > maxEnergy
+  )
+    return;
+  if (serving.amountPerUnit === null && serving.kcalPerUnit === null) return;
+  return db.transaction("rw", [db.foods, db.aliases, db.portions], async () => {
+    const existing = await storedFor(db, target);
+    if (await cachedServing(db, existing, unit)) return existing;
+    const food =
+      existing ??
+      foodSchema.parse({
+        id: crypto.randomUUID(),
+        ...target,
+        nutrients: unknownNutrients(),
+        addedSugarG: null,
+        evidence: [],
+        assumptions: [],
+        confidence: "medium",
+        version: 1,
+      });
+    if (!existing) await db.foods.add(food);
+    await db.portions.add(
+      portionSchema.parse({
+        id: crypto.randomUUID(),
+        foodId: food.id,
+        variant: food.variant,
+        unit,
+        ...(serving.kcalPerUnit === null
+          ? {}
+          : { energyKcalPerUnit: serving.kcalPerUnit }),
+        gramsPerUnit:
+          target.basis === "per_100g" ? serving.amountPerUnit : null,
+        mlPerUnit: target.basis === "per_100ml" ? serving.amountPerUnit : null,
+        range: null,
+        evidence: [
+          {
+            url: citationUrl(cited.url),
+            title: cited.title,
+            accessedDate: cited.accessedDate,
+            basis: unit,
+            evidenceId: cited.id,
+            keys: serving.kcalPerUnit === null ? [] : ["energy_kcal"],
+          },
+        ],
+        assumptions: ["sonar_cited_serving_estimate"],
+        confidence: "medium",
+        version: 1,
+      }),
+    );
+    return food;
+  });
+}
+
 const activeLookups = new WeakMap<
   CalioDatabase,
   Map<string, Promise<Food | null>>
@@ -126,17 +227,33 @@ export async function lookupCalorieFood(
   db: CalioDatabase,
   transport: AiTransport,
   target: CalorieTarget,
+  portionUnit?: string,
 ) {
   const input = calorieTargetSchema.parse(target);
   const local = await findLocalCalorieFood(db, input);
-  if (local?.nutrients.energy_kcal != null) return local;
+  const unit = portionUnit ? normalizeServingUnit(portionUnit) : undefined;
+  const serving = unit ? await cachedServing(db, local, unit) : null;
+  const hasDensity = local?.nutrients.energy_kcal != null;
+  if (
+    serving?.energyKcalPerUnit !== undefined ||
+    (hasDensity && (!unit || serving))
+  )
+    return local;
+  const missingUnit = unit && !serving ? unit : undefined;
+  const search = missingUnit
+    ? {
+        ...input,
+        portionUnit: missingUnit,
+        ...(hasDensity ? { portionOnly: true as const } : {}),
+      }
+    : input;
   if (db.mode !== "real") throw new AiFailure("ai_mode_mismatch");
   let active = activeLookups.get(db);
   if (!active) {
     active = new Map();
     activeLookups.set(db, active);
   }
-  const key = calorieTargetKey(input);
+  const key = JSON.stringify([calorieTargetKey(input), missingUnit]);
   const existing = active.get(key);
   if (existing) return existing;
   const lookup = (async () => {
@@ -147,19 +264,32 @@ export async function lookupCalorieFood(
       db,
       transport,
       "calories",
-      input,
+      search,
       idempotencyKey,
     );
     const parsed = parseCalorieAnswer(response.output, input);
-    if (parsed.status === "unknown") return local;
-    const evidence = response.evidence.find(
-      (entry) =>
-        entry.supportedNutrients.includes("energy_kcal") &&
-        entry.basis === input.basis &&
-        citationUrl(entry.url) === citationUrl(parsed.source.url),
-    );
-    if (!evidence) throw new AiFailure("ai_evidence");
-    return saveCalorieAnswer(db, input, parsed, "api", evidence.accessedDate);
+    let food = local;
+    if (parsed.status === "known") {
+      const evidence = response.evidence.find(
+        (entry) =>
+          !entry.supportsPortion &&
+          entry.supportedNutrients.includes("energy_kcal") &&
+          entry.basis === input.basis &&
+          citationUrl(entry.url) === citationUrl(parsed.source.url),
+      );
+      if (!evidence) throw new AiFailure("ai_evidence");
+      food = await saveCalorieAnswer(
+        db,
+        input,
+        parsed,
+        "api",
+        evidence.accessedDate,
+      );
+    }
+    const withServing = missingUnit
+      ? await saveServing(db, input, missingUnit, parsed, response.evidence)
+      : null;
+    return withServing ?? food;
   })();
   active.set(key, lookup);
   try {

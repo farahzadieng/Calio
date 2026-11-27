@@ -140,13 +140,7 @@ export default function Journal() {
     setWorking(true);
     try {
       const result = await runManualAnalysis(db, locale, date);
-      if (result === "sync")
-        notify(
-          "قبل از تحلیل، Apple Health را همگام کنید.",
-          "Sync Apple Health before analyzing.",
-          "warning",
-        );
-      else if (result === "unavailable")
+      if (result === "unavailable")
         notify(
           "سرویس AI هنوز فعال نیست. تنظیمات اتصال را بررسی کنید.",
           "AI is unavailable. Check integration settings.",

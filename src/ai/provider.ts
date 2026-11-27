@@ -5,7 +5,7 @@ import {
   calorieSearchModel,
   citationUrl,
   parseCalorieAnswer,
-  type CalorieTarget,
+  type CalorieSearch,
 } from "../domain/calorie-lookup";
 import {
   AiFailure,
@@ -92,7 +92,7 @@ const annotationUrlSchema = z.object({
 
 function validateCalorieCitation(
   raw: unknown,
-  input: CalorieTarget,
+  input: CalorieSearch,
   annotations: unknown,
 ) {
   let output;
@@ -101,34 +101,74 @@ function validateCalorieCitation(
   } catch {
     throw new AiFailure("ai_calories_schema");
   }
-  if (output.status === "unknown") return { output, evidence: [] };
-  const url = citationUrl(output.source.url);
-  const cited =
-    Array.isArray(annotations) &&
-    annotations.some((annotation: unknown) => {
-      const parsed = annotationUrlSchema.safeParse(annotation);
-      const annotated = parsed.data?.url_citation?.url ?? parsed.data?.url;
-      try {
-        return !!annotated && citationUrl(annotated) === url;
-      } catch {
-        return false;
-      }
-    });
-  if (!cited) throw new AiFailure("ai_evidence");
-  const evidence: ToolEvidence[] = [
-    {
-      id: "sonar-1",
-      url,
-      title: output.source.title,
-      accessedDate: new Date().toISOString().slice(0, 10),
-      basis: input.basis,
-      supportedNutrients: ["energy_kcal"],
-      supportsPortion: false,
-      supportsAddedSugar: false,
-      supportsRecipeYield: false,
-    },
+  const sources = [
+    ...(output.status === "known"
+      ? [{ source: output.source, portion: false }]
+      : []),
+    ...(input.portionUnit && output.serving
+      ? [{ source: output.serving.source, portion: true }]
+      : []),
   ];
-  return { output: { ...output, source: { ...output.source, url } }, evidence };
+  const evidence = sources.flatMap<ToolEvidence>(
+    ({ source, portion }, index) => {
+      const url = citationUrl(source.url);
+      const cited =
+        Array.isArray(annotations) &&
+        annotations.some((annotation: unknown) => {
+          const parsed = annotationUrlSchema.safeParse(annotation);
+          const annotated = parsed.data?.url_citation?.url ?? parsed.data?.url;
+          try {
+            return !!annotated && citationUrl(annotated) === url;
+          } catch {
+            return false;
+          }
+        });
+      if (!cited) return [];
+      return [
+        {
+          id: `sonar-${index + 1}`,
+          url,
+          title: source.title,
+          accessedDate: new Date().toISOString().slice(0, 10),
+          basis: input.basis,
+          supportedNutrients: ["energy_kcal"],
+          supportsPortion: portion,
+          supportsAddedSugar: false,
+          supportsRecipeYield: false,
+        },
+      ];
+    },
+  );
+  const serving = evidence.some((entry) => entry.supportsPortion)
+    ? output.serving
+    : null;
+  if (output.status === "known") {
+    const density = evidence.find((entry) => !entry.supportsPortion);
+    if (density)
+      return {
+        output: {
+          ...output,
+          source: { ...output.source, url: density.url },
+          ...(input.portionUnit ? { serving } : {}),
+        },
+        evidence,
+      };
+    if (!serving) throw new AiFailure("ai_evidence");
+    return {
+      output: {
+        status: "unknown",
+        basis: input.basis,
+        kcalPer100: null,
+        source: null,
+        serving,
+      },
+      evidence,
+    };
+  }
+  return {
+    output: input.portionUnit ? { ...output, serving } : output,
+    evidence,
+  };
 }
 
 export async function providerCall(
@@ -194,7 +234,9 @@ export async function providerCall(
             ? (config.calorieModel ?? calorieSearchModel)
             : (config.model ?? defaultAiProvider.model),
         stream: false,
-        ...(operation === "calories" ? { max_tokens: 240 } : {}),
+        ...(operation === "calories"
+          ? { max_tokens: (input as Input<"calories">).portionUnit ? 550 : 240 }
+          : {}),
         messages: [
           { role: "system", content: prompt },
           {

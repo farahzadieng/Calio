@@ -162,3 +162,13 @@ Physical iPhone standalone and live provider requests were not exercised.
 | IranRouter CORS | A credential-free OPTIONS preflight for the planned app origin returned HTTP 204, allowing POST with Authorization and Content-Type. |
 
 No authenticated live provider request was sent. Physical iPhone standalone remains untested.
+
+## 2026-11-27 — Calio 0.8.0 batch food and serving analysis
+
+| Check | Outcome |
+|---|---|
+| Formatting, lint, typecheck and production builds | Passed for the application and static Node server. |
+| Vitest | All 52 tests passed. The multi-day fixture verifies fractional flatbread, measured grams, cheese blocks, handfuls, reuse without duplicate lookups, and rejection of a 1 kg cheese matchbox estimate. |
+| Chrome and desktop WebKit | All 24 browser tests passed, including accessibility checks and direct calorie-lookup and offline workflows. |
+
+The new serving search was exercised with synthetic model responses. Live provider search and physical iPhone standalone remain unverified.

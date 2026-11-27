@@ -6,7 +6,7 @@ import type { ResearchOutput } from "../generated/research";
 import type { WeeklyOutput } from "../generated/weekly";
 import { localDate, localeSchema } from "../domain/dates";
 import {
-  calorieTargetSchema,
+  calorieSearchSchema,
   type CalorieAnswer,
 } from "../domain/calorie-lookup";
 import { httpUrl, normalizeFoodText } from "../domain/library";
@@ -17,6 +17,7 @@ import {
 } from "../domain/nutrition";
 
 export const promptVersion = "v1";
+export const extractionPromptVersion = "v2";
 export const operations = [
   "extract",
   "portion",
@@ -36,7 +37,7 @@ const foodName = z.string().trim().max(250);
 const key = z.enum(nutrientKeys);
 
 export const inputSchemas = {
-  calories: calorieTargetSchema,
+  calories: calorieSearchSchema,
   extract: z.strictObject({
     entries: z.array(entry).min(1).max(12),
     locale: localeSchema,

@@ -66,6 +66,7 @@ export const portionSchema = z
     foodId: z.uuid(),
     variant: name,
     unit: name.min(1),
+    energyKcalPerUnit: z.number().min(0).max(2500).optional(),
     gramsPerUnit: z.number().positive().nullable(),
     mlPerUnit: z.number().positive().nullable(),
     range: z
@@ -81,7 +82,11 @@ export const portionSchema = z
     version,
   })
   .superRefine((portion, context) => {
-    if (!portion.gramsPerUnit && !portion.mlPerUnit) {
+    if (
+      !portion.gramsPerUnit &&
+      !portion.mlPerUnit &&
+      portion.energyKcalPerUnit === undefined
+    ) {
       context.addIssue({
         code: "custom",
         path: ["gramsPerUnit"],
@@ -151,6 +156,28 @@ export function findFood(
   return candidates.length === 1 ? (candidates[0] ?? null) : null;
 }
 
+const servingUnits: Record<string, [string, string]> = {
+  piece: ["عدد", "piece"],
+  block: ["قالب", "block"],
+  matchbox: ["قوطی کبریت", "matchbox"],
+  handful: ["مشت", "handful"],
+};
+
+export function normalizeServingUnit(unit: string) {
+  const normalized = normalizeFoodText(unit);
+  return (
+    Object.entries(servingUnits).find(([, labels]) =>
+      labels.includes(normalized),
+    )?.[0] ?? normalized
+  );
+}
+
+export function servingUnitLabel(unit: string, locale: "fa" | "en") {
+  return (
+    servingUnits[normalizeServingUnit(unit)]?.[locale === "fa" ? 0 : 1] ?? unit
+  );
+}
+
 export function findPortion(
   food: Food,
   unit: string,
@@ -160,9 +187,13 @@ export function findPortion(
     (portion) =>
       portion.foodId === food.id &&
       identityPart(portion.variant) === identityPart(food.variant) &&
-      normalizeFoodText(portion.unit) === normalizeFoodText(unit),
+      normalizeServingUnit(portion.unit) === normalizeServingUnit(unit),
   );
-  return matching.length === 1 ? (matching[0] ?? null) : null;
+  return (
+    matching.find(
+      (portion) => normalizeFoodText(portion.unit) === normalizeFoodText(unit),
+    ) ?? (matching.length === 1 ? (matching[0] ?? null) : null)
+  );
 }
 
 const massUnit = new Map([

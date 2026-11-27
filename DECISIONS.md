@@ -90,3 +90,7 @@ Proposed, not settled: exact color hex values, route hierarchy, supplement place
 ## 2026-11-27 — Device-owned API connection
 - The owner requested a static host and direct provider calls from each installed PWA. Save the key and provider settings in a dedicated IndexedDB table outside backups and diagnostics. Require consent before any provider request, and reset it when first saving or changing the provider URL.
 - Use browser-compatible HTTPS endpoints with CORS, versioned prompts and validated responses. The production and development hosts no longer expose AI gateway routes.
+
+## 2026-11-27 — Reusable calorie references by serving
+- Parse all foods in a note in one extraction and process pending notes in bounded batches. Manual food analysis is independent of Health sync, which still gates weekly reports.
+- Use saved references first. With AI consent, the default diary workflow searches for missing per-100 and customary-unit references. Honor the explicit Copy prompt setting. Store cited unit calories or a cited conversion, keep weak or implausible values unknown, and commit the diary rows together without per-item confirmations.

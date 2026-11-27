@@ -452,6 +452,8 @@ test("Persian calorie table and copied ChatGPT JSON work without a live API", as
   await page.getByLabel("جست‌وجو در جدول مرجع").fill("سنگک");
   await expect(page.getByRole("row", { name: /سنگک.*۲۵۸/ })).toBeVisible();
   await expect(page.getByRole("row", { name: /بربری/ })).toHaveCount(0);
+  await page.getByLabel("روش تحلیل کالری").click();
+  await page.getByRole("option", { name: "کپی به پرامپت" }).click();
   await page.getByLabel("نام فارسی خوراکی").fill("سنگک");
   await page
     .getByRole("button", { name: "کپی به پرامپت", exact: true })

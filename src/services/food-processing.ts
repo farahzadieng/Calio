@@ -1,6 +1,7 @@
 import {
   AiFailure,
   promptVersion,
+  extractionPromptVersion,
   validateExtract,
   validatePortion,
   validateResearch,
@@ -23,6 +24,7 @@ import {
   findPortion,
   foodSchema,
   normalizeFoodText,
+  normalizeServingUnit,
   portionSchema,
   resolveAmount,
   type Food,
@@ -43,6 +45,8 @@ import { advanceJob, claimJob, releaseJob, requireLease } from "./jobs";
 type ExtractEntry = Output<"extract">["entries"][number];
 type ExtractItem = ExtractEntry["items"][number];
 type Claim = { note: DiaryNote; job: Job };
+const noteBatchSize = 12;
+const parallelFoodLookups = 3;
 
 function isSupplement(item: ExtractItem) {
   return /supplement|مکمل/.test(
@@ -82,25 +86,37 @@ async function fetchFood(
     db.foods.toArray(),
     db.aliases.toArray(),
   ]);
-  const cached = findFood(identity, foods, aliases);
+  const amount = resolveAmount(item.quantity, item.unit, null);
+  const defaultBasis = amount.ml !== null ? "per_100ml" : "per_100g";
+  const cached =
+    (db.mode === "real"
+      ? findFood(
+          identity,
+          foods.filter((food) => food.basis === defaultBasis),
+          aliases,
+        )
+      : null) ?? findFood(identity, foods, aliases);
   if (db.mode === "real") {
-    const amount = resolveAmount(item.quantity, item.unit, null);
     const basis =
-      cached?.basis ?? (amount.ml !== null ? "per_100ml" : "per_100g");
+      amount.grams !== null || amount.ml !== null
+        ? defaultBasis
+        : (cached?.basis ?? defaultBasis);
     const parsed = calorieTargetSchema.safeParse({ ...identity, basis });
     if (!parsed.success) return cached;
-    const local = (await findLocalCalorieFood(db, parsed.data)) ?? cached;
+    const local =
+      (await findLocalCalorieFood(db, parsed.data)) ??
+      (cached?.basis === basis ? cached : null);
     const settings = await db.settings.get("settings");
-    const measured = amountForBasis(amount, basis);
-    if (
-      local?.nutrients.energy_kcal != null ||
-      settings?.calorieLookupMode !== "api" ||
-      measured === null ||
-      measured <= 0
-    )
-      return local;
+    if (settings?.calorieLookupMode === "copy" || !item.quantity) return local;
+    const unit =
+      amount.grams === null && amount.ml === null
+        ? normalizeServingUnit(item.unit)
+        : undefined;
+    if (!unit && amountForBasis(amount, basis) === null) return local;
     try {
-      return (await lookupCalorieFood(db, transport, parsed.data)) ?? local;
+      return (
+        (await lookupCalorieFood(db, transport, parsed.data, unit)) ?? local
+      );
     } catch (error) {
       if (!(error instanceof AiFailure)) throw error;
       return local;
@@ -177,7 +193,8 @@ async function fetchPortion(
     item.unit,
     await db.portions.where("foodId").equals(food.id).toArray(),
   );
-  if (cached) return { portion: cached, requiresReview: false };
+  if (cached || db.mode === "real")
+    return { portion: cached, requiresReview: false };
   const input: Input<"portion"> = {
     food_name: food.nameEn || food.nameFa,
     variant: food.variant,
@@ -274,6 +291,12 @@ async function calculateMeal(
   const nutrients = food
     ? scaleReference(food.nutrients, food.basis, amount)
     : unknownNutrients();
+  if (portion?.energyKcalPerUnit !== undefined) {
+    nutrients.energy_kcal = scaleAmount(
+      portion.energyKcalPerUnit,
+      item.quantity,
+    );
+  }
   const reviewReason = supplement
     ? "supplement_label_required"
     : (item.review_reason ?? (requiresReview ? "portion_review" : null));
@@ -302,7 +325,7 @@ async function calculateMeal(
     reviewReason,
     status: reviewReason
       ? "needs_review"
-      : measured === null
+      : measured === null && nutrients.energy_kcal === null
         ? "unresolved"
         : "calculated",
   });
@@ -327,7 +350,7 @@ async function commitExtraction(
           entryId: current.id,
           revision: current.revision,
           localDate: current.localDate,
-          promptVersion,
+          promptVersion: extractionPromptVersion,
           model,
           output,
           symptoms: output.symptoms,
@@ -380,7 +403,7 @@ function failureStage(error: AiFailure) {
   return error.retryable ? "retryable" : "failed";
 }
 
-export async function processNotes(
+async function processNoteBatch(
   db: CalioDatabase,
   transport: AiTransport,
   options: { locale: Locale; explicit: boolean; notes: readonly DiaryNote[] },
@@ -389,13 +412,13 @@ export async function processNotes(
   if (db.mode === "real" && !(await db.settings.get("settings"))?.aiConsentAt)
     throw new AiFailure("ai_consent_required");
   const claims: Claim[] = [];
-  for (const note of options.notes.slice(0, 12)) {
+  for (const note of options.notes) {
     const inputHash = await sha256(
       JSON.stringify([
         note.id,
         note.revision,
         note.localDate,
-        promptVersion,
+        extractionPromptVersion,
         transport.model,
       ]),
     );
@@ -421,7 +444,7 @@ export async function processNotes(
       const stored = await db.parsed_entries.get([note.id, note.revision]);
       if (
         stored?.model === transport.model &&
-        stored.promptVersion === promptVersion
+        stored.promptVersion === extractionPromptVersion
       ) {
         const validated = validateExtract(
           { entries: [stored.output] },
@@ -439,7 +462,12 @@ export async function processNotes(
         locale: options.locale,
       };
       const key = await sha256(
-        JSON.stringify(["extract", transport.model, promptVersion, input]),
+        JSON.stringify([
+          "extract",
+          transport.model,
+          extractionPromptVersion,
+          input,
+        ]),
       );
       const response = await requestAi(db, transport, "extract", input, key);
       const output = validateExtract(response.output, input);
@@ -471,10 +499,19 @@ export async function processNotes(
       if (!parsed) throw new AiFailure("ai_extract_identity");
       await advanceJob(db, claim.job, "matching");
       const meals: MealItem[] = [];
-      for (const item of parsed.items) {
+      for (
+        let offset = 0;
+        offset < parsed.items.length;
+        offset += parallelFoodLookups
+      ) {
         await advanceJob(db, claim.job, "researching");
+        const group = parsed.items.slice(offset, offset + parallelFoodLookups);
         meals.push(
-          await calculateMeal(db, transport, claim.note, item, options.locale),
+          ...(await Promise.all(
+            group.map((item) =>
+              calculateMeal(db, transport, claim.note, item, options.locale),
+            ),
+          )),
         );
       }
       await advanceJob(db, claim.job, "calculating");
@@ -496,4 +533,21 @@ export async function processNotes(
     }
   }
   return result;
+}
+
+export async function processNotes(
+  db: CalioDatabase,
+  transport: AiTransport,
+  options: Parameters<typeof processNoteBatch>[2],
+) {
+  const results: Awaited<ReturnType<typeof processNoteBatch>> = [];
+  for (let offset = 0; offset < options.notes.length; offset += noteBatchSize) {
+    results.push(
+      ...(await processNoteBatch(db, transport, {
+        ...options,
+        notes: options.notes.slice(offset, offset + noteBatchSize),
+      })),
+    );
+  }
+  return results;
 }

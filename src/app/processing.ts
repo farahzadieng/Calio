@@ -7,13 +7,6 @@ import { processForegroundWeeks } from "../services/weekly";
 
 export const healthFreshMs = 24 * 60 * 60_000;
 
-export async function healthIsRecent(db: CalioDatabase, now = new Date()) {
-  const latest = await db.health_imports.orderBy("importedAt").last();
-  if (!latest) return false;
-  const elapsed = now.getTime() - new Date(latest.importedAt).getTime();
-  return elapsed >= 0 && elapsed <= healthFreshMs;
-}
-
 export async function runManualAnalysis(
   db: CalioDatabase,
   locale: Locale,
@@ -29,7 +22,6 @@ export async function runManualAnalysis(
   if (!navigator.onLine) return "error";
   const transport = await DirectAiTransport.connect(db);
   if (!transport) return "unavailable";
-  if (!(await healthIsRecent(db))) return "sync";
   const results = await processNotes(db, transport, {
     locale,
     notes,

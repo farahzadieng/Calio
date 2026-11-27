@@ -120,7 +120,7 @@ function CalorieLookup({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const mode = settings.calorieLookupMode ?? "copy";
+  const mode = settings.calorieLookupMode ?? "api";
   const number = numberFormatter(locale, { maximumFractionDigits: 2 });
   const unit = (basis: CalorieTarget["basis"]) =>
     basis === "per_100g"
@@ -373,8 +373,8 @@ function CalorieLookup({
         <p className="field-hint">
           {mode === "api"
             ? t(
-                "در این حالت، Calio در صورت پیدا نکردن مرجع محلی برای خوراکی دارای مقدار مصرف، از Sonar استفاده می‌کند. درخواست API ممکن است هزینه داشته باشد.",
-                "Calio uses Sonar for measured food items without a matching local reference. API requests may incur a charge.",
+                "در این حالت، Calio در صورت پیدا نکردن مرجع محلی برای خوراکی دارای مقدار مصرف، برای مقدار مرجع یا واحد مصرف از مدل جست‌وجوی کالری استفاده می‌کند. درخواست API ممکن است هزینه داشته باشد.",
+                "Calio searches for missing calorie references and customary servings. API requests may incur a charge.",
               )
             : t(
                 "Calio ابتدا کتابخانه و جدول محلی را بررسی می‌کند. می‌توانید برای خوراکی‌های دیگر از پرامپت استفاده کنید.",

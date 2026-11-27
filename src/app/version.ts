@@ -14,11 +14,11 @@ export function displayAppVersion(locale: Locale) {
 
 export const latestReleaseNotes = {
   fa: [
-    "تنظیمات اتصال و کلید API حتی آفلاین روی همین دستگاه ذخیره می‌شوند.",
-    "آزمون مدل و پردازش هوش مصنوعی مستقیماً به ارائه‌دهندهٔ انتخابی وصل می‌شوند.",
+    "پردازش یک‌جای یادداشت و محاسبهٔ کالری بر اساس واحدهایی مثل عدد، قالب و مشت.",
+    "ذخیرهٔ مرجع هر ۱۰۰ گرم و هر واحد مصرف در کتابخانه برای استفادهٔ دوباره.",
   ],
   en: [
-    "Save connection settings and your API key on this device, even offline.",
-    "Model tests and AI processing connect directly to your provider.",
+    "Process whole notes together and calculate calories for units such as pieces, blocks and handfuls.",
+    "Reuse per-100 and per-serving references from the food library.",
   ],
 } satisfies Record<Locale, readonly string[]>;
