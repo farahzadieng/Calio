@@ -15,6 +15,8 @@ Calio sends the entered key once to its own local service. The service stores it
 
 On a direct loopback install, the Node adapter issues an HttpOnly, same-site owner session cookie to the app. Call it at the configured origin, normally `http://127.0.0.1:4173`. For a reachable HTTPS installation, authenticate the owner at the reverse proxy. Overwrite `X-Calio-Authenticated` with the private `CALIO_AUTH_PROXY_TOKEN`, and set `CALIO_PUBLIC_ORIGIN` to the exact public origin. Keep the Node port on loopback. Same-origin validation, request size limits, schema validation, timeouts, and in-flight deduplication also apply. An explicit host-managed legacy profile can use the variables in `.env.example`. The static preview alone has no connection service.
 
+The local PWA renews its owner session when the Node service restarts. `npm run dev` also includes the gateway on loopback and uses the ignored `.calio-ai.json.dev` file, independently of the Node installation. Open the exact address printed by the server. If the connection service is temporarily unavailable, use **Check connection service again** in Settings.
+
 The service worker precaches static assets and omits all `/api/` responses. Browser records remain in IndexedDB. The visible logo, favicon, Apple Touch icon link, and install manifest follow the selected theme. The home screen stores the installed icon according to browser and system behavior, and may require a new installation to pick up a different icon. Back up the diary before removing an existing iPhone installation.
 
 ## Search capability and test

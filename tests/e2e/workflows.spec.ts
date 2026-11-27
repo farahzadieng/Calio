@@ -653,7 +653,7 @@ test("Persian date shortcuts use Eastern numerals and notifications dismiss afte
 
 test.describe("intercepted connection settings", () => {
   test.use({ serviceWorkers: "block" });
-  test("connection settings prefill editable model IDs and never repopulate the key", async ({
+  test("connection settings recover the local session, save and test the edited connection", async ({
     page,
   }) => {
     await onboard(page, "en");
@@ -671,7 +671,15 @@ test.describe("intercepted connection settings", () => {
       calorieModel: string;
       apiKey?: string;
     }[] = [];
+    let serviceAvailable = false;
+    let session = false;
+    await page.route("**/api/calio/ai/session", (route) => {
+      session = true;
+      return route.fulfill({ status: 204 });
+    });
     await page.route("**/api/calio/ai/settings", async (route) => {
+      if (!serviceAvailable) return route.fulfill({ status: 503 });
+      if (!session) return route.fulfill({ status: 403 });
       if (route.request().method() === "PUT") {
         const input = route.request().postDataJSON();
         updates.push(input);
@@ -686,11 +694,49 @@ test.describe("intercepted connection settings", () => {
       }
       await route.fulfill({ json: config });
     });
+    const probes: unknown[] = [];
+    await page.route("**/api/calio/ai", (route) => {
+      const payload = route.request().postDataJSON();
+      probes.push(payload);
+      const { entry_id, revision, local_date } = payload.input.entries[0];
+      return route.fulfill({
+        json: {
+          requestId: payload.requestId,
+          model: config.model,
+          provider: "provider.example",
+          output: {
+            entries: [
+              {
+                entry_id,
+                revision,
+                local_date,
+                items: [],
+                symptoms: [],
+                unparsed_text: [],
+              },
+            ],
+          },
+          evidence: [],
+          usage: { inputTokens: 10, outputTokens: 10 },
+        },
+      });
+    });
     await page.goto("/settings/integrations");
     const analysis = page.getByLabel("Analysis and reporting model");
     const search = page.getByLabel("Calorie search model");
     const key = page.getByLabel("API key");
     const save = page.getByRole("button", { name: "Save connection" });
+    const testAnalysis = page.getByRole("button", {
+      name: "Test analysis model",
+    });
+    await expect(key).toBeDisabled();
+    await expect(testAnalysis).toBeDisabled();
+    serviceAvailable = true;
+    await page
+      .getByRole("button", { name: "Check connection service again" })
+      .click();
+    await expect(key).toBeEditable();
+    expect(session).toBe(true);
     await expect(analysis).toHaveValue("openai/gpt-6-luna");
     await expect(search).toHaveValue("perplexity/sonar");
     await expect(save).toHaveCSS("min-height", "44px");
@@ -709,6 +755,7 @@ test.describe("intercepted connection settings", () => {
     await expect(page.getByRole("alert")).toContainText("Enter an API key");
     expect(updates).toHaveLength(0);
     await key.fill("synthetic-ui-test-key");
+    session = false;
     await save.click();
     await expect(
       page
@@ -723,9 +770,25 @@ test.describe("intercepted connection settings", () => {
       apiKey: "synthetic-ui-test-key",
     });
     await expect(key).toHaveValue("");
+    await expect(testAnalysis).toBeDisabled();
+    await page
+      .getByRole("switch", { name: "Consent to AI processing" })
+      .click();
+    await expect(testAnalysis).toBeEnabled();
+    await key.fill("synthetic-unsaved-key");
+    await expect(testAnalysis).toBeDisabled();
+    await key.clear();
+    await testAnalysis.click();
     await expect(
-      page.getByRole("button", { name: "Test analysis model" }),
-    ).toBeDisabled();
+      page
+        .getByRole("status")
+        .filter({ hasText: "The analysis model test passed." }),
+    ).toBeVisible();
+    expect(probes).toHaveLength(1);
+    expect(probes[0]).toMatchObject({
+      operation: "extract",
+      input: { entries: [{ entry_id: "test-synthetic" }] },
+    });
   });
 });
 

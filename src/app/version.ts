@@ -14,11 +14,11 @@ export function displayAppVersion(locale: Locale) {
 
 export const latestReleaseNotes = {
   fa: [
-    "نسخهٔ اپ و فهرست تغییرات از تنظیمات در دسترس‌اند.",
-    "پس از انتخاب زبان، راهنمای کوتاه ثبت خوراک و مشاهدهٔ گزارش‌ها نمایش داده می‌شود.",
+    "ویرایش نشانی، کلید و مدل‌های AI در نسخهٔ محلی پس از راه‌اندازی دوبارهٔ سرویس بازیابی می‌شود.",
+    "دکمه‌های آزمون اتصال و مراحل فعال‌کردن آن‌ها در تنظیمات نمایش داده می‌شوند.",
   ],
   en: [
-    "See the app version and release notes in Settings.",
-    "After choosing a language, get a quick guide to logging food and viewing reports.",
+    "Edit the AI endpoint, key and model IDs after the local service restarts.",
+    "Settings shows both model tests and how to enable them.",
   ],
 } satisfies Record<Locale, readonly string[]>;

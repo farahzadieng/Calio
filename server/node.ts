@@ -1,12 +1,9 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import { Readable } from "node:stream";
 import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomBytes, timingSafeEqual } from "node:crypto";
-import { createGateway } from "./gateway";
-import { openAiSettings, readAiSettingsInput } from "./ai-settings";
-import { fetchPublicProvider } from "./provider-network";
+import { createAiHttp, isAiPath } from "./ai-http";
+import { openAiSettings } from "./ai-settings";
 
 const appOrigin = new URL(
   process.env.CALIO_PUBLIC_ORIGIN ?? "http://127.0.0.1:4173",
@@ -15,13 +12,6 @@ const host = "127.0.0.1";
 const port = Number(process.env.CALIO_PORT ?? "4173");
 const upstreamIdentityToken = process.env.CALIO_AUTH_PROXY_TOKEN ?? "";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../dist");
-const appUrl = new URL(appOrigin);
-const localOwner =
-  !upstreamIdentityToken &&
-  appUrl.protocol === "http:" &&
-  ["localhost", "127.0.0.1"].includes(appUrl.hostname);
-const sessionName = "calio_local_owner";
-const localSession = randomBytes(32).toString("hex");
 const aiSettings = await openAiSettings(
   process.env.CALIO_AI_CONFIG_FILE || resolve(root, "../.calio-ai.json"),
   {
@@ -34,89 +24,12 @@ const aiSettings = await openAiSettings(
   },
 );
 
-function matchesSecret(actual: string, expected: string) {
-  const left = Buffer.from(actual);
-  const right = Buffer.from(expected);
-  return (
-    Boolean(right.length) &&
-    left.length === right.length &&
-    timingSafeEqual(left, right)
-  );
-}
+const aiHttp = createAiHttp({
+  appOrigin,
+  aiSettings,
+  proxyToken: upstreamIdentityToken,
+});
 
-function authorized(request: Request) {
-  if (upstreamIdentityToken) {
-    return matchesSecret(
-      request.headers.get("x-calio-authenticated") ?? "",
-      upstreamIdentityToken,
-    );
-  }
-  if (!localOwner || request.headers.get("host") !== appUrl.host) return false;
-  const site = request.headers.get("sec-fetch-site");
-  if (site && site !== "same-origin") return false;
-  const cookie = (request.headers.get("cookie") ?? "")
-    .split(";")
-    .map((value) => value.trim())
-    .find((value) => value.startsWith(sessionName + "="));
-  return matchesSecret(
-    cookie?.slice(sessionName.length + 1) ?? "",
-    localSession,
-  );
-}
-
-let currentGateway: ReturnType<typeof createGateway> | undefined;
-let boundRevision: string | undefined;
-async function handleAi(request: Request) {
-  const path = new URL(request.url).pathname;
-  const sameOrigin = request.headers.get("Origin") === appOrigin;
-  const acceptedHeader = request.headers.get("X-Calio-Request") === "1";
-  if (!authorized(request))
-    return Response.json({ error: "gateway_auth" }, { status: 403 });
-
-  if (path === "/api/calio/ai/settings") {
-    if (!acceptedHeader)
-      return Response.json({ error: "gateway_auth" }, { status: 403 });
-    if (request.method === "GET")
-      return Response.json(aiSettings.publicSettings());
-    if (request.method !== "PUT") return new Response(null, { status: 405 });
-    if (
-      !sameOrigin ||
-      !/^application\/json(?:\s*;|$)/i.test(
-        request.headers.get("Content-Type") ?? "",
-      )
-    ) {
-      return new Response(null, { status: 403 });
-    }
-    try {
-      return await aiSettings.save(await readAiSettingsInput(request.body));
-    } catch {
-      return new Response(null, { status: 400 });
-    }
-  }
-
-  const active = aiSettings.current();
-  if (!active.enabled)
-    return Response.json({ error: "gateway_unconfigured" }, { status: 503 });
-  if (
-    !sameOrigin ||
-    request.headers.get("X-Calio-Config") !== active.revision
-  ) {
-    return Response.json(
-      { error: "gateway_configuration_changed" },
-      { status: 409 },
-    );
-  }
-  if (currentGateway === undefined || boundRevision !== active.revision) {
-    currentGateway = createGateway({
-      ...active,
-      allowedOrigin: appOrigin,
-      authenticate: authorized,
-      fetchProvider: fetchPublicProvider,
-    });
-    boundRevision = active.revision;
-  }
-  return currentGateway(request);
-}
 const contentTypes: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -148,30 +61,8 @@ const server = createServer(
         outgoing.writeHead(400, security).end();
         return;
       }
-      if (["/api/calio/ai", "/api/calio/ai/settings"].includes(url.pathname)) {
-        const headers = new Headers();
-        for (const [name, value] of Object.entries(request.headers)) {
-          if (Array.isArray(value))
-            value.forEach((v) => headers.append(name, v));
-          else if (value !== undefined) headers.set(name, value);
-        }
-        const body =
-          method === "POST" || method === "PUT"
-            ? (Readable.toWeb(request) as ReadableStream<Uint8Array>)
-            : undefined;
-        const networkRequest = new Request(url, {
-          method,
-          headers,
-          body,
-          duplex: "half",
-        } as RequestInit);
-        const response = await handleAi(networkRequest);
-        outgoing.writeHead(response.status, {
-          ...security,
-          ...Object.fromEntries(response.headers),
-          "Cache-Control": "no-store",
-        });
-        outgoing.end(Buffer.from(await response.arrayBuffer()));
+      if (isAiPath(url.pathname)) {
+        await aiHttp.respond(request, outgoing, url, security);
         return;
       }
       if (
@@ -204,12 +95,8 @@ const server = createServer(
         ? "public, max-age=31536000, immutable"
         : "no-cache";
       const localCookie =
-        localOwner &&
-        file === resolve(root, "index.html") &&
-        request.headers.host === appUrl.host
-          ? {
-              "Set-Cookie": `${sessionName}=${localSession}; HttpOnly; SameSite=Strict; Path=/api/calio/ai`,
-            }
+        file === resolve(root, "index.html")
+          ? aiHttp.ownerCookie(request.headers.host)
           : {};
       outgoing.writeHead(200, {
         ...security,

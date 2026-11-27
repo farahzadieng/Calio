@@ -127,3 +127,15 @@ See the [Persian journal](screenshots/journal-fa-japandi.png), [light settings](
 | Responsive and accessibility checks | The Persian guide fit at 320 px. Axe scans passed for the guide and expanded release notes. Reviewed both new screens in the light theme at 390 px. |
 
 Physical iPhone standalone was not exercised. No live AI requests were made.
+
+## 2026-11-27 — Calio 0.5.1 AI settings recovery
+
+| Check | Outcome |
+|---|---|
+| Format, lint, typecheck, client and server builds | Passed. The client build reports the missing Bonyade Koodak font removed in commit `336cb8f`. |
+| Vitest | 50 passed, including a real loopback HTTP test of session renewal and private settings storage with a synthetic key. |
+| AI settings in Chrome and WebKit | Passed in both browsers. Verified settings service recovery, session renewal on save, editing the base URL and both models, blank key readback, consent, disabled tests for unsaved edits, and a successful synthetic analysis test from Settings. |
+| Local runtime smoke | The Persian API key field was editable after session renewal on both the Node and Vite addresses. In an isolated Vite instance, synthetic settings saved successfully and both file-serving paths denied access to the private configuration. |
+| Full browser suite | 18 passed and 6 failed. All failures were font checks in the journal, offline asset cache and Persian digit scenarios across the two browsers. The browser could not load or cache the removed WOFF2. |
+
+The removed font was left out of the workspace. No live provider calls or physical iPhone tests were performed.

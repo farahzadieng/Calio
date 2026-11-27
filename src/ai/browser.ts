@@ -11,26 +11,45 @@ import {
   type AiSettingsUpdate,
 } from "./configuration";
 
+async function restoreLocalSession(signal: AbortSignal) {
+  const session = await fetch("/api/calio/ai/session", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { "X-Calio-Request": "1" },
+    signal,
+  });
+  return session.status === 204;
+}
+
 export async function readAiSettings() {
-  const response = await fetch("/api/calio/ai/settings", {
+  const options = {
     credentials: "same-origin",
     cache: "no-store",
     signal: AbortSignal.timeout(5000),
     headers: { "X-Calio-Request": "1" },
-  });
+  } as const;
+  let response = await fetch("/api/calio/ai/settings", options);
+  if (response.status === 403 && (await restoreLocalSession(options.signal))) {
+    response = await fetch("/api/calio/ai/settings", options);
+  }
   if (!response.ok) throw new AiFailure("ai_settings_unavailable");
   return aiSettingsSchema.parse(await response.json());
 }
 
 export async function saveAiSettings(input: AiSettingsUpdate) {
-  const response = await fetch("/api/calio/ai/settings", {
+  const options = {
     method: "PUT",
     credentials: "same-origin",
     cache: "no-store",
     headers: { "Content-Type": "application/json", "X-Calio-Request": "1" },
     body: JSON.stringify(input),
     signal: AbortSignal.timeout(8000),
-  });
+  } as const;
+  let response = await fetch("/api/calio/ai/settings", options);
+  if (response.status === 403 && (await restoreLocalSession(options.signal))) {
+    response = await fetch("/api/calio/ai/settings", options);
+  }
   if (!response.ok) {
     const failure = await response.json().catch(() => null);
     throw new AiFailure(

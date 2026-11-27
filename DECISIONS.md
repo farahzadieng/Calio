@@ -76,3 +76,8 @@ Proposed, not settled: exact color hex values, route hierarchy, supplement place
 
 - The owner set the starting app version to 0.5. The package number is `0.5.0` and Settings displays `۰/۵` in Persian or `0.5` in English with expandable release notes. Increment the version by the scope of each app update and keep the latest notes in both languages.
 - After language selection for a new profile, show a short guide to the journal, drinks and supplements, optional Apple Health import, and insights. The guide precedes the profile form and can return to language selection. Existing profiles continue to open the app directly.
+
+## 2026-11-27 — Restore AI connection editing
+
+- Restore expired local owner sessions through a same-origin request outside the PWA cache. Use the same authenticated settings and provider gateway in loopback Vite development, with a separate private configuration file. Static preview requires the Node service for AI.
+- Keep both model tests visible. Enable them after saving and granting consent, and require saving edits before testing. Tests use synthetic inputs and can incur provider charges.

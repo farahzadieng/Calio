@@ -28,12 +28,22 @@ export function AiConnection() {
   const [draft, setDraft] = useState(defaultAiProvider);
   const [stored, setStored] = useState<AiSettings | null>(null);
   const [status, setStatus] = useState<Status>("loading");
+  const [reload, setReload] = useState(0);
   const [error, setError] = useState<Failure | null>(null);
   const [testing, setTesting] = useState<"calories" | "extract" | null>(null);
   const [tested, setTested] = useState<"calories" | "extract" | null>(null);
   const [saving, setSaving] = useState(false);
+  const [hasDraftKey, setHasDraftKey] = useState(false);
   const keyInput = useRef<HTMLInputElement>(null);
   const busy = saving || !!testing;
+  const connectionEdited =
+    stored !== null &&
+    (hasDraftKey ||
+      draft.baseUrl !== stored.baseUrl ||
+      draft.model !== stored.model ||
+      draft.calorieModel !== stored.calorieModel);
+  const canTest =
+    stored?.enabled && !!settings.aiConsentAt && !connectionEdited;
 
   useEffect(() => {
     let active = true;
@@ -54,7 +64,7 @@ export function AiConnection() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reload]);
 
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -77,12 +87,13 @@ export function AiConnection() {
       return;
     }
     setSaving(true);
-    if (keyInput.current) keyInput.current.value = "";
     try {
       if (changesProvider && settings.aiConsentAt) {
         await db.settings.update("settings", { aiConsentAt: null });
       }
       const next = await saveAiSettings(parsed.data);
+      if (keyInput.current) keyInput.current.value = "";
+      setHasDraftKey(false);
       setStored(next);
       setDraft({
         baseUrl: next.baseUrl,
@@ -102,7 +113,7 @@ export function AiConnection() {
   }
 
   async function probe(operation: "calories" | "extract") {
-    if (!stored?.enabled || !settings.aiConsentAt) return;
+    if (!canTest) return;
     setTesting(operation);
     setError(null);
     setTested(null);
@@ -226,6 +237,7 @@ export function AiConnection() {
           autoComplete="off"
           maxLength={4096}
           disabled={busy || status === "loading" || status === "unavailable"}
+          onChange={(event) => setHasDraftKey(!!event.target.value.trim())}
           hint={
             stored?.hasKey
               ? t(
@@ -263,11 +275,14 @@ export function AiConnection() {
           t("در حال خواندن وضعیت اتصال…", "Checking connection settings…")}
         {status === "unavailable" &&
           t(
-            "سرویس محلی تنظیمات اتصال در دسترس نیست.",
-            "The local connection settings service is unavailable.",
+            "سرویس اتصال در این نشانی در دسترس نیست. کالیو را از نشانی سرویس محلی باز کنید یا دوباره بررسی کنید.",
+            "The connection service is unavailable at this address. Open Calio from its local service or check again.",
           )}
         {status === "saved" &&
+          !testing &&
+          !tested &&
           t("تنظیمات اتصال ذخیره شد.", "Connection settings saved.")}
+        {testing && t("در حال آزمون اتصال…", "Testing connection…")}
         {tested === "extract" &&
           t("آزمون مدل تحلیل موفق بود.", "The analysis model test passed.")}
         {tested === "calories" &&
@@ -281,30 +296,51 @@ export function AiConnection() {
           {messages[error]}
         </p>
       )}
-      {stored?.enabled && (
+      {status === "unavailable" && (
         <div className="actions">
           <Button
             tone="quiet"
-            disabled={busy || !settings.aiConsentAt}
-            onClick={() => void probe("extract")}
+            onClick={() => {
+              setStatus("loading");
+              setReload((value) => value + 1);
+            }}
           >
-            {t("آزمون مدل تحلیل", "Test analysis model")}
+            {t("بررسی دوبارهٔ سرویس اتصال", "Check connection service again")}
           </Button>
-          <Button
-            tone="quiet"
-            disabled={busy || !settings.aiConsentAt}
-            onClick={() => void probe("calories")}
-          >
-            {t("آزمون مدل جست‌وجو", "Test search model")}
-          </Button>
-          <p className="muted small">
-            {t(
-              "هر آزمون یک درخواست API می‌فرستد و ممکن است هزینه داشته باشد.",
-              "Each test sends one API request and may incur a charge.",
-            )}
-          </p>
         </div>
       )}
+      <div className="actions">
+        <Button
+          tone="quiet"
+          disabled={busy || !canTest}
+          onClick={() => void probe("extract")}
+        >
+          {t("آزمون مدل تحلیل", "Test analysis model")}
+        </Button>
+        <Button
+          tone="quiet"
+          disabled={busy || !canTest}
+          onClick={() => void probe("calories")}
+        >
+          {t("آزمون مدل جست‌وجو", "Test search model")}
+        </Button>
+      </div>
+      <p className="muted small">
+        {!stored?.enabled || connectionEdited
+          ? t(
+              "ابتدا تنظیمات اتصال را ذخیره کنید.",
+              "Save the connection settings first.",
+            )
+          : !settings.aiConsentAt
+            ? t(
+                "برای آزمون، رضایت پردازش توسط AI را فعال کنید.",
+                "Enable AI processing consent to run a test.",
+              )
+            : t(
+                "هر آزمون یک درخواست ساختگی می‌فرستد و ممکن است هزینه داشته باشد.",
+                "Each test sends one synthetic request and may incur a charge.",
+              )}
+      </p>
       <Link
         className="button button--quiet settings-link"
         to="/settings/diagnostics"
